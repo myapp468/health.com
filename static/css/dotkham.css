@@ -1,0 +1,10 @@
+#patient-list {
+    max-height: 500px; /* Giới hạn chiều cao */
+    overflow-y: auto;  /* Bật thanh cuộn khi nội dung dài */
+    border-right: 1px solid #ddd; /* Tạo đường phân cách */
+    padding-right: 10px;
+}
+
+#table-excel{
+    display: none;
+}

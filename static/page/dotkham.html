@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Website</title>
+    <link rel="shortcut icon" href="../img/logo.PNG" type="image/x-icon">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="../css/dotkham.css">
+
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg bg-success navbar-dark">
+        <div class="container-fluid">
+            <!-- <a class="navbar-brand" href="#">Navbar</a> -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
+                aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="../../">Trang chủ</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="./changePwd.html">Đổi mật khẩu</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="./checkaccount.html">Phân quyền</a>
+                    </li>
+                </ul>
+                <form class="d-flex" role="search">
+                    <button class="btn btn-danger" type="submit" id="sign-out"
+                        onclick="logout()">Logout</button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h2>Danh Sách Bệnh Nhân</h2>
+        <!-- Button trigger modal -->
+        <button class="btn btn-warning mb-2 text-white" data-bs-toggle="modal" data-bs-target="#exampleModal"
+            id="addPatient">
+            Thêm bệnh nhân
+        </button>
+        <button class="btn btn-success mb-2" onclick="exportToExcel()">Xuất Excel</button>
+        <table class="table table-bordered" id="table-excel">
+            <thead>
+                <tr>
+                    <th>CCCD</th>
+                    <th>Họ và Tên</th>
+                    <th>Địa chỉ</th>
+                    <th>Số ĐT</th>
+                    <th>Ngày sinh</th>
+                    <th>Ngày cấp</th>
+                    <th>Giới tính</th>
+                    <th>BHYT</th>
+                    <th>Mắt trái</th>
+                    <th>Mắt phải</th>
+                    <th>Chẩn đoán</th>
+                    <th>Chỉ định</th>
+                </tr>
+            </thead>
+            <tbody id="patientList"></tbody>
+        </table>
+        <input type="text" id="searchPatient" class="form-control mb-2" placeholder="Tìm kiếm theo tên hoặc CCCD">
+        <label><input type="radio" name="filter" value="all" checked> Tất cả</label>
+        <label><input type="radio" name="filter" value="unfinished"> Chưa hoàn thành</label>
+        <label><input type="radio" name="filter" value="finished"> Đã hoàn thành</label>
+
+        <div id="patient-info">
+            <div class="row">
+                <!-- Danh sách bệnh nhân (Bên trái) -->
+                <div class="col-3" id="patient-list">
+                    <!-- Bệnh nhân sẽ được thêm bằng JS -->
+                </div>
+
+                <!-- Thông tin bệnh nhân (Bên phải) -->
+                <div class="col-5 d-none" id="infoPantient">
+                    <h4>Thông tin bệnh nhân</h4>
+                    <p><strong>Tên:</strong> <span id="detail-name"></span></p>
+                    <p><strong>Ngày sinh:</strong> <span id="detail-dob"></span></p>
+                    <p><strong>Địa chỉ:</strong> <span id="detail-address"></span></p>
+                    <p><strong>SĐT:</strong> <span id="detail-phone"></span></p>
+                    <p><strong>Giới tính:</strong> <span id="detail-gender"></span></p>
+                    <p><strong>BHYT:</strong> <span id="detail-bhyt"></span></p>
+                </div>
+
+                <div class="col-4">
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Modal -->
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">Thông tin bệnh nhân</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="myForm">
+                        <div class="form-floating my-1">
+                            <input type="text" class="form-control" id="scannerInput" placeholder="Password"
+                                style="background-color: aquamarine;">
+                            <label for="scannerInput">Quét mã vạch vào đây</label>
+                        </div>
+                        <div class="container text-center">
+                            <div class="row align-items-start">
+                                <div class="col-6 my-1">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="id1" placeholder="Password">
+                                        <label for="scannerInput">CCCD</label>
+                                    </div>
+                                </div>
+                                <!-- <div class="col-6">
+                                    <div class="form-floating my-3">
+                                        <input type="text" class="form-control" id="id2" placeholder="Password">
+                                        <label for="scannerInput">Mã khác</label>
+                                    </div>
+                                </div> -->
+                                <div class="col-6 my-1">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="name" placeholder="Password">
+                                        <label for="scannerInput">Họ và tên</label>
+                                    </div>
+                                </div>
+                                <div class="col-6 my-1">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="address" placeholder="Password">
+                                        <label for="scannerInput">Địa chỉ</label>
+                                    </div>
+                                </div>
+                                <div class="col-6 my-1">
+                                    <div class="form-floating">
+                                        <input type="tel" class="form-control" id="phone" placeholder="Password">
+                                        <label for="scannerInput">Số điện thoại</label>
+                                    </div>
+                                </div>
+                                <div class="col-6 my-1 text-start">
+                                    <label class="form-label">Ngày sinh:</label>
+                                    <input class="form-control" type="date" id="dob" />
+                                </div>
+                                <div class="col-6 my-1 text-start">
+                                    <label class="form-label">Ngày cấp:</label>
+                                    <input class="form-control" type="date" id="date" />
+                                </div>
+                                <div class="col-6 my-1">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="bhyt" placeholder="Số thẻ BHYT">
+                                        <label for="bhyt">Số thẻ BHYT</label>
+                                    </div>
+                                </div>
+                                <div class="col-6 my-1 text-start">
+                                    <label class="form-label">Giới tính:</label><input class="ms-3 form-check-input"
+                                        type="radio" name="gender" id="male"> Nam<input class="ms-3 form-check-input"
+                                        type="radio" name="gender" id="female"> Nữ
+                                </div>
+                            </div>
+                        </div>
+
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-primary">Lưu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast thông báo -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050;">
+        <div id="toast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive"
+            aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    Đã thêm đợt khám thành công!
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                    aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-storage-compat.js"></script>
+
+    <!-- Firebase Auth -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.13.1/firebase-auth-compat.min.js"
+        integrity="sha512-b2PGOE6ClpdFR5WZylPqJ9NEtHyGtdXKIe5wI0qRKVg3VeH9Km8CvihpnySwf6v21TV2cMTUp/BuglUiFLB38Q=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <script src="../js/logout.js"></script>
+    <script src="../js/firebase-config.js"></script>
+    <script src="../js/main.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
