@@ -7,6 +7,20 @@ if (now < userSession?.expiry) {
 else {
     window.location.href = './login.html';
 }
+// Check phân quyền
+
+db.collection("accounts").doc(userSession.user.uid).get().then((doc) => {
+    const roleCheck = (doc.data().role != "admin")
+    if (roleCheck) {
+        document.getElementById("adminRole").classList.add("d-none")
+    }
+    else{
+        document.getElementById("adminRole").classList.add("d-block")
+    }
+}).catch((error) => {
+    console.log("Error getting document:", error);
+});
+
 
 document.getElementById('changePasswordForm').addEventListener('submit', async (e) => {
     e.preventDefault();

@@ -8,6 +8,20 @@ else {
     window.location.href = './login.html';
 }
 
+// Check phân quyền
+db.collection("accounts").doc(userSession.user.uid).get().then((doc) => {
+    const roleCheck = (doc.data().role != "admin")
+    let delList=document.getElementsByClassName("btn-secondary")
+    let changeList=document.getElementsByClassName("btn-danger")
+    let editList=document.getElementsByClassName("btn-warning")
+    
+    if (roleCheck) {
+        window.location.href = '../../';
+    }
+}).catch((error) => {
+    console.log("Error getting document:", error);
+});
+
 // Lấy danh sách user từ Firestore
 const userTable = document.getElementById("userTable");
 const roleFilter = document.getElementById("roleFilter");

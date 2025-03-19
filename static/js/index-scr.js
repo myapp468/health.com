@@ -118,6 +118,7 @@ db.collection("accounts").doc(userSession.user.uid).get().then((doc) => {
     if (roleCheck) {
         document.getElementById("addRoute").disabled = true
         document.getElementById("addRoute").style.display = "none"
+        document.getElementById("adminRole").classList.add("d-none")
         for (let index = 0; index < delList.length; index++) {
             delList[index].style.display="none";  
         }
@@ -127,6 +128,9 @@ db.collection("accounts").doc(userSession.user.uid).get().then((doc) => {
         for (let index = 0; index < editList.length; index++) {
             editList[index].style.display="none";  
         }
+    }
+    else{
+        document.getElementById("adminRole").classList.add("d-block")
     }
 }).catch((error) => {
     console.log("Error getting document:", error);
