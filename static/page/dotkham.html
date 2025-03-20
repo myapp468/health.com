@@ -68,20 +68,23 @@
             </thead>
             <tbody id="patientList"></tbody>
         </table>
-        <input type="text" id="searchPatient" class="form-control mb-2" placeholder="Tìm kiếm theo tên hoặc CCCD">
-        <label><input type="radio" name="filter" value="all" checked> Tất cả</label>
-        <label><input type="radio" name="filter" value="unfinished"> Chưa hoàn thành</label>
-        <label><input type="radio" name="filter" value="finished"> Đã hoàn thành</label>
+        
+        <div class="my-3">
+            <input type="text" id="searchPatient" class="form-control mb-2" placeholder="Tìm kiếm theo tên hoặc CCCD">
+            <label><input type="radio" name="filter" value="all" checked> Tất cả</label>
+            <label><input type="radio" name="filter" value="unfinished"> Chưa hoàn thành</label>
+            <label><input type="radio" name="filter" value="finished"> Đã hoàn thành</label>
+        </div>
 
         <div id="patient-info">
             <div class="row">
                 <!-- Danh sách bệnh nhân (Bên trái) -->
-                <div class="col-3" id="patient-list">
+                <div class="col-6 col-md-3" id="patient-list">
                     <!-- Bệnh nhân sẽ được thêm bằng JS -->
                 </div>
 
                 <!-- Thông tin bệnh nhân (Bên phải) -->
-                <div class="col-5 d-none" id="infoPantient">
+                <div class="col-md-5 d-none" id="infoPantient">
                     <h4>Thông tin bệnh nhân</h4>
                     <p><strong>Tên:</strong> <span id="detail-name"></span></p>
                     <p><strong>Ngày sinh:</strong> <span id="detail-dob"></span></p>
@@ -91,7 +94,7 @@
                     <p><strong>BHYT:</strong> <span id="detail-bhyt"></span></p>
                 </div>
 
-                <div class="col-4">
+                <div class="col-6 col-md-4"  id="resultPantient">
 
                 </div>
             </div>

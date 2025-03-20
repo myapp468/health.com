@@ -85,14 +85,14 @@ function saveRole(userId) {
         .then(() => showToast(`Vai trò đã cập nhật thành ${newRole}!`))
         .catch((error) => {
             console.error("Lỗi khi cập nhật:", error);
-            showToast("Lỗi khi cập nhật vai trò!");
+            showToast("Lỗi khi cập nhật vai trò!","error");
         });
 }
 
 // Reset mật khẩu user
 function resetPassword(email) {
     if (!email) {
-        showToast("Không tìm thấy email người dùng!");
+        showToast("Không tìm thấy email người dùng!","error");
         return;
     }
 
@@ -100,7 +100,7 @@ function resetPassword(email) {
         .then(() => showToast(`Email đặt lại mật khẩu đã gửi tới ${email}!`))
         .catch((error) => {
             console.error("Lỗi khi reset mật khẩu:", error);
-            showToast("Lỗi khi gửi email. Kiểm tra lại email hoặc quyền admin!");
+            showToast("Lỗi khi gửi email. Kiểm tra lại email hoặc quyền admin!","error");
         });
 }
 
@@ -113,7 +113,7 @@ function toggleLock(userId, isLocked) {
         })
         .catch((error) => {
             console.error("Lỗi khi khóa/mở khóa tài khoản:", error);
-            showToast("Lỗi khi thay đổi trạng thái tài khoản!");
+            showToast("Lỗi khi thay đổi trạng thái tài khoản!","error");
         });
 }
 
@@ -148,9 +148,22 @@ statusFilter.addEventListener("change", filterUsers);
 loadUsers();
 
 
-function showToast(message) {
+// Tạo toast
+function showToast(message, type = "success") {
     const toastElement = document.getElementById("toast");
-    toastElement.querySelector(".toast-body").textContent = message;
+    const toastBody = toastElement.querySelector(".toast-body");
+
+    // Xóa các class màu trước đó
+    toastElement.classList.remove("bg-success", "bg-danger", "text-white");
+
+    // Thêm màu phù hợp
+    if (type === "error") {
+        toastElement.classList.add("bg-danger", "text-white"); // Nền đỏ, chữ trắng
+    } else {
+        toastElement.classList.add("bg-success", "text-white"); // Nền xanh, chữ trắng
+    }
+
+    toastBody.textContent = message;
     const toast = new bootstrap.Toast(toastElement);
     toast.show();
 }

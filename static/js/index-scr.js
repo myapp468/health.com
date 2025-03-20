@@ -27,9 +27,22 @@ signout.addEventListener("submit", logout);
 
 
 
-function showToast(message) {
+// Tạo toast
+function showToast(message, type = "success") {
     const toastElement = document.getElementById("toast");
-    toastElement.querySelector(".toast-body").textContent = message;
+    const toastBody = toastElement.querySelector(".toast-body");
+
+    // Xóa các class màu trước đó
+    toastElement.classList.remove("bg-success", "bg-danger", "text-white");
+
+    // Thêm màu phù hợp
+    if (type === "error") {
+        toastElement.classList.add("bg-danger", "text-white"); // Nền đỏ, chữ trắng
+    } else {
+        toastElement.classList.add("bg-success", "text-white"); // Nền xanh, chữ trắng
+    }
+
+    toastBody.textContent = message;
     const toast = new bootstrap.Toast(toastElement);
     toast.show();
 }
@@ -51,43 +64,66 @@ function loadDotKham() {
                             <button class="btn btn-sm btn-danger float-end" onclick="xoaDotKham('${doc.id}')" >Xóa</button>
                             <button class="btn btn-sm btn-secondary float-end me-2" onclick="toggleStatus('${doc.id}', ${data.active})" >Đổi trạng thái</button>
                             <button class="btn btn-warning btn-sm float-end me-2" onclick="moModalSuaDotKham('${doc.id}', '${data.name}', '${data.date}')">Sửa</button>
-                            <button class="btn btn-sm btn-primary float-end me-2" onclick="openDotKham('${doc.id}')">Xem</button>`;
+                            <button class="btn btn-sm btn-primary float-end me-2" onclick="openDotKham('${doc.id}')">Tham gia Khám</button>`;
             list.appendChild(li);
         });
     });
 }
 
 
-
 // Thêm đợt khám
 function themDotKham() {
-    const name = document.getElementById("dotKhamName").value;
-    const date = document.getElementById("dotKhamDate").value;
-    if (name && date) {
-        const newDotKhamRef = db.collection("dot_kham").doc(); // Tạo document với ID tự động
-        newDotKhamRef.set({
-            name,
-            date,
-            active: true,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        }).then(() => {
-            // Tạo collection "benh_nhan" bên trong document vừa tạo
-            newDotKhamRef.collection("benh_nhan").add({
-                placeholder: true // Thêm một bản ghi placeholder để đảm bảo collection được tạo
-            }).then(() => {
-                console.log("Collection benh_nhan đã được tạo bên trong document mới");
-            }).catch(error => {
-                console.error("Lỗi khi tạo collection benh_nhan:", error);
-            });
+    const name = document.getElementById("dotKhamName").value.trim();
+    const dateInput = document.getElementById("dotKhamDate").value;
+    console.log(dateInput)
 
-            showToast("Đã thêm đợt khám thành công!");
-            document.getElementById("dotKhamName").value = "";
-            document.getElementById("dotKhamDate").value = "";
-            var modal = bootstrap.Modal.getInstance(document.getElementById("addModal"));
-            modal.hide();
-        });
+    if (!name || !dateInput) {
+        showToast("Vui lòng nhập đầy đủ thông tin!");
+        return;
     }
+
+    // Chuyển đổi định dạng ngày từ YYYY-MM-DD → DD/MM/YYYY
+    const dateParts = dateInput.split("-");
+    const formattedDate = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
+
+    // Kiểm tra trùng tên & ngày trước khi thêm
+    db.collection("dot_kham")
+        .where("name", "==", name)
+        .where("date", "==", formattedDate) // So sánh với định dạng mới
+        .get()
+        .then((querySnapshot) => {
+            if (!querySnapshot.empty) {
+                showToast("Đợt khám với tên và ngày này đã tồn tại. Vui lòng chọn tên/ngày khác!");
+                return;
+            }
+
+            // Nếu không trùng, tiếp tục tạo đợt khám mới
+            const newDotKhamRef = db.collection("dot_kham").doc();
+            newDotKhamRef.set({
+                name,
+                date: formattedDate, // Lưu ngày đã định dạng
+                active: true,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                // Tạo collection "benh_nhan" bên trong document vừa tạo
+                //newDotKhamRef.collection("benh_nhan").add({ placeholder: true });
+
+                showToast("Đã thêm đợt khám thành công!");
+                document.getElementById("dotKhamName").value = "";
+                document.getElementById("dotKhamDate").value = "";
+
+                var modal = bootstrap.Modal.getInstance(document.getElementById("addModal"));
+                modal.hide();
+            });
+        })
+        .catch(error => {
+            console.error("Lỗi khi kiểm tra trùng tên và ngày:", error);
+            showToast("Có lỗi xảy ra, vui lòng thử lại!");
+        });
 }
+
+
+
 
 
 function toggleStatus(id, currentStatus) {
@@ -111,25 +147,25 @@ loadDotKham();
 // Check phân quyền
 db.collection("accounts").doc(userSession.user.uid).get().then((doc) => {
     const roleCheck = (doc.data().role != "admin")
-    let delList=document.getElementsByClassName("btn-secondary")
-    let changeList=document.getElementsByClassName("btn-danger")
-    let editList=document.getElementsByClassName("btn-warning")
-    
+    let delList = document.getElementsByClassName("btn-secondary")
+    let changeList = document.getElementsByClassName("btn-danger")
+    let editList = document.getElementsByClassName("btn-warning")
+
     if (roleCheck) {
         document.getElementById("addRoute").disabled = true
         document.getElementById("addRoute").style.display = "none"
         document.getElementById("adminRole").classList.add("d-none")
         for (let index = 0; index < delList.length; index++) {
-            delList[index].style.display="none";  
+            delList[index].style.display = "none";
         }
         for (let index = 0; index < changeList.length; index++) {
-            changeList[index].style.display="none";  
+            changeList[index].style.display = "none";
         }
         for (let index = 0; index < editList.length; index++) {
-            editList[index].style.display="none";  
+            editList[index].style.display = "none";
         }
     }
-    else{
+    else {
         document.getElementById("adminRole").classList.add("d-block")
     }
 }).catch((error) => {
@@ -165,3 +201,17 @@ function capNhatDotKham() {
         });
     }
 }
+
+// Lọc ngày hiện tại
+document.addEventListener("DOMContentLoaded", function () {
+    // Lấy ngày hôm nay
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0"); // Tháng bắt đầu từ 0 nên phải +1
+    const dd = String(today.getDate()).padStart(2, "0");
+
+    const minDate = `${yyyy}-${mm}-${dd}`; // Định dạng YYYY-MM-DD
+
+    // Gán giá trị min cho input date
+    document.getElementById("dotKhamDate").setAttribute("min", minDate);
+});

@@ -14,7 +14,7 @@ db.collection("accounts").doc(userSession.user.uid).get().then((doc) => {
     if (roleCheck) {
         document.getElementById("adminRole").classList.add("d-none")
     }
-    else{
+    else {
         document.getElementById("adminRole").classList.add("d-block")
     }
 }).catch((error) => {
@@ -199,7 +199,7 @@ function exportToExcel() {
         db.collection(dotKhamId).orderBy("createdAt", "asc").get().then(querySnapshot => {
             let data = [];
             let index = 1; // Bắt đầu STT từ 1
-            
+
             querySnapshot.forEach(doc => {
                 let patient = doc.data();
                 data.push([
@@ -245,24 +245,37 @@ function exportToExcel() {
 
 
 // Tạo toast
-function showToast(message) {
+function showToast(message, type = "success") {
     const toastElement = document.getElementById("toast");
-    toastElement.querySelector(".toast-body").textContent = message;
+    const toastBody = toastElement.querySelector(".toast-body");
+
+    // Xóa các class màu trước đó
+    toastElement.classList.remove("bg-success", "bg-danger", "text-white");
+
+    // Thêm màu phù hợp
+    if (type === "error") {
+        toastElement.classList.add("bg-danger", "text-white"); // Nền đỏ, chữ trắng
+    } else {
+        toastElement.classList.add("bg-success", "text-white"); // Nền xanh, chữ trắng
+    }
+
+    toastBody.textContent = message;
     const toast = new bootstrap.Toast(toastElement);
     toast.show();
 }
 
 
 
+
 function loadPatientList() {
     const table = document.getElementById("patientList"); // Bảng danh sách
     const patientListContainer = document.getElementById("patient-list"); // Cột trái
-    const diagnosisContainer = document.querySelector(".col-4"); // Cột phải
+    const diagnosisContainer = document.querySelector("#resultPantient"); // Cột phải
     const searchInput = document.getElementById("searchPatient"); // Ô tìm kiếm
     const filterValue = document.querySelector('input[name="filter"]:checked').value; // Kiểm tra radio
 
-    document.getElementById("infoPantient").classList.add("d-none");
-    document.getElementById("infoPantient").classList.remove("d-block");
+    document.getElementById("infoPantient").classList.add("d-md-none");
+    document.getElementById("infoPantient").classList.remove("d-md-block");
 
     function renderPatients(querySnapshot, searchValue = "") {
         table.innerHTML = "";
@@ -357,8 +370,8 @@ function loadPatientList() {
                 document.getElementById("detail-gender").innerText = data.gender;
                 document.getElementById("detail-bhyt").innerText = data.bhyt;
 
-                document.getElementById("infoPantient").classList.add("d-block");
-                document.getElementById("infoPantient").classList.remove("d-none");
+                document.getElementById("infoPantient").classList.add("d-md-block");
+                document.getElementById("infoPantient").classList.remove("d-md-none");
 
                 // 📌 4️⃣ Kiểm tra trạng thái bệnh nhân
                 const isLocked = data.status === "lock";
@@ -400,6 +413,8 @@ function loadPatientList() {
                         <option value="ST+">ST+</option>
                         <option value="ST-">ST-</option>
                     </select>
+                    <button class="btn btn-primary mt-2 save-btn-${patientId}" onclick="saveVision('${patientId}')">Lưu</button>
+                    <hr>
 
                     <label>Chẩn đoán:</label>
                     <select id="diagnosis-${patientId}" class="form-select mb-2">
@@ -418,7 +433,7 @@ function loadPatientList() {
                         <option value="Khám chuyên sâu">Khám chuyên sâu</option>
                     </select>
 
-                    <button id="save-btn-${patientId}" class="btn btn-primary mt-2" onclick="saveDiagnosis('${patientId}')">Lưu</button>
+                    <button id="save-btn-${patientId}" class="btn btn-primary mt-2 save-btn-${patientId}" onclick="saveDiagnosis('${patientId}')">Lưu</button>
                 `;
 
                 // 📌 6️⃣ Load dữ liệu đã có từ Firestore
@@ -430,7 +445,9 @@ function loadPatientList() {
                         const visionRightElement = document.getElementById(`vision-right-${patientId}`);
                         const diagnosisElement = document.getElementById(`diagnosis-${patientId}`);
                         const treatmentElement = document.getElementById(`treatment-${patientId}`);
-                        const saveButton = document.getElementById(`save-btn-${patientId}`);
+                        // const saveButton = document.getElementById(`save-btn-${patientId}`);
+                        const saveButton = document.getElementsByClassName(`save-btn-${patientId}`);
+
 
                         if (visionLeftElement) visionLeftElement.value = patientData.visionLeft || "";
                         if (visionRightElement) visionRightElement.value = patientData.visionRight || "";
@@ -443,10 +460,11 @@ function loadPatientList() {
                             if (visionRightElement) visionRightElement.disabled = true;
                             if (diagnosisElement) diagnosisElement.disabled = true;
                             if (treatmentElement) treatmentElement.disabled = true;
-                            if (saveButton) {
-                                saveButton.disabled = true;
-                                saveButton.classList.add("btn-secondary");
-                                saveButton.classList.remove("btn-primary");
+                            for (let index = 0; index < saveButton.length; index++) {
+                                saveButton[index].disabled = true;
+                                saveButton[index].classList.add("btn-secondary");
+                                saveButton[index].classList.remove("btn-primary");
+
                             }
                         }
                     }
@@ -458,51 +476,107 @@ function loadPatientList() {
     });
 }
 
-
-
 // 📌 6️⃣ Lưu thông tin vào Firestore
-function saveDiagnosis(patientId) {
+function saveVision(patientId) {
     // Lấy giá trị từ dropdown
     const visionLeftElement = document.getElementById(`vision-left-${patientId}`);
     const visionRightElement = document.getElementById(`vision-right-${patientId}`);
-    const diagnosisElement = document.getElementById(`diagnosis-${patientId}`);
-    const treatmentElement = document.getElementById(`treatment-${patientId}`);
-    const saveButton = document.getElementById(`save-btn-${patientId}`);
 
     // Kiểm tra nếu không tìm thấy phần tử
-    if (!visionLeftElement || !visionRightElement || !diagnosisElement || !treatmentElement || !saveButton) {
+    if (!visionLeftElement || !visionRightElement) {
         console.error("Không tìm thấy dropdown hoặc nút Lưu. Kiểm tra ID hoặc HTML.");
         return;
     }
 
     const visionLeft = visionLeftElement.value;
     const visionRight = visionRightElement.value;
-    const diagnosis = diagnosisElement.value;
-    const treatment = treatmentElement.value;
+    // Kiểm tra nếu không tìm thấy phần tử
+    if (!visionLeft || !visionRight) {
+        showToast("Chưa có thông tin thị lực", "error");
+        return;
+    }
 
     // Cập nhật Firestore
     db.collection(dotKhamId).doc(patientId).update({
         visionLeft,
         visionRight,
-        diagnosis,
-        treatment,
-        status: "lock" // Cập nhật trạng thái thành "lock"
     }).then(() => {
-        showToast("Đã lưu chẩn đoán thành công!");
+        showToast("Đã lưu kết quả thị lực!");
 
         // Kiểm tra trước khi disable
-        if (visionLeftElement) visionLeftElement.disabled = true;
-        if (visionRightElement) visionRightElement.disabled = true;
-        if (diagnosisElement) diagnosisElement.disabled = true;
-        if (treatmentElement) treatmentElement.disabled = true;
 
-        if (saveButton) {
-            saveButton.disabled = true;
-            saveButton.classList.add("btn-secondary");
-            saveButton.classList.remove("btn-primary");
-        }
+
     }).catch(error => {
-        console.error("Lỗi khi lưu dữ liệu:", error);
+        showToast(`Lỗi khi lưu dữ liệu: ${error}`, "error");
+    });
+}
+
+
+// 📌 6️⃣ Lưu thông tin vào Firestore
+function saveDiagnosis(patientId) {
+    // Lấy giá trị từ dropdown
+    // Check phân quyền
+    db.collection("accounts").doc(userSession.user.uid).get().then((doc) => {
+        const roleCheck = (doc.data().role == "admin" || doc.data().role == "doctor")
+        if (roleCheck) {
+            console.log(roleCheck)
+            const visionLeftElement = document.getElementById(`vision-left-${patientId}`);
+            const visionRightElement = document.getElementById(`vision-right-${patientId}`);
+            const diagnosisElement = document.getElementById(`diagnosis-${patientId}`);
+            const treatmentElement = document.getElementById(`treatment-${patientId}`);
+            const saveButton = document.getElementsByClassName(`save-btn-${patientId}`);
+
+            // Kiểm tra nếu không tìm thấy phần tử
+            if (!visionLeftElement || !visionRightElement || !diagnosisElement || !treatmentElement) {
+                showToast("Không tìm thấy dropdown hoặc nút Lưu. Kiểm tra ID hoặc HTML.", "error");
+                return;
+            }
+
+            const visionLeft = visionLeftElement.value;
+            const visionRight = visionRightElement.value;
+            const diagnosis = diagnosisElement.value;
+            const treatment = treatmentElement.value;
+            if (!visionLeft || !visionRight || !diagnosis || !treatment) {
+                showToast("Vui lòng điền đủ thông tin", "error");
+                return;
+            }
+
+            // Cập nhật Firestore
+            db.collection(dotKhamId).doc(patientId).update({
+                visionLeft,
+                visionRight,
+                diagnosis,
+                treatment,
+                status: "lock" // Cập nhật trạng thái thành "lock"
+            }).then(() => {
+                showToast("Đã lưu chẩn đoán thành công!");
+
+                // Kiểm tra trước khi disable
+                if (visionLeftElement) visionLeftElement.disabled = true;
+                if (visionRightElement) visionRightElement.disabled = true;
+                if (diagnosisElement) diagnosisElement.disabled = true;
+                if (treatmentElement) treatmentElement.disabled = true;
+
+                for (let index = 0; index < saveButton.length; index++) {
+                    saveButton[index].disabled = true;
+                    saveButton[index].classList.add("btn-secondary");
+                    saveButton[index].classList.remove("btn-primary");
+
+                }
+                // if (saveButton) {
+                //     saveButton.disabled = true;
+                //     saveButton.classList.add("btn-secondary");
+                //     saveButton.classList.remove("btn-primary");
+                // }
+            }).catch(error => {
+                showToast("Lỗi khi lưu dữ liệu:", "error");
+            });
+        }
+        else {
+            showToast("Chỉ có bác sĩ mới có quyền lưu thông tin khám", "error")
+        }
+    }).catch((error) => {
+        showToast("Error getting document:", "error");
     });
 }
 

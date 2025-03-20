@@ -66,9 +66,21 @@ document.getElementById('changePasswordForm').addEventListener('submit', async (
 });
 
 // Tạo toast
-function showToast(message) {
+function showToast(message, type = "success") {
     const toastElement = document.getElementById("toast");
-    toastElement.querySelector(".toast-body").textContent = message;
+    const toastBody = toastElement.querySelector(".toast-body");
+
+    // Xóa các class màu trước đó
+    toastElement.classList.remove("bg-success", "bg-danger", "text-white");
+
+    // Thêm màu phù hợp
+    if (type === "error") {
+        toastElement.classList.add("bg-danger", "text-white"); // Nền đỏ, chữ trắng
+    } else {
+        toastElement.classList.add("bg-success", "text-white"); // Nền xanh, chữ trắng
+    }
+
+    toastBody.textContent = message;
     const toast = new bootstrap.Toast(toastElement);
     toast.show();
 }
