@@ -17,3 +17,12 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 // Initialize Cloud Storage and get a reference to the service
 const storage = firebase.storage();
+
+
+// Tooltip
+document.addEventListener("DOMContentLoaded", function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});

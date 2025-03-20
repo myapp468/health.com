@@ -11,10 +11,10 @@ else {
 // Check phân quyền
 db.collection("accounts").doc(userSession.user.uid).get().then((doc) => {
     const roleCheck = (doc.data().role != "admin")
-    let delList=document.getElementsByClassName("btn-secondary")
-    let changeList=document.getElementsByClassName("btn-danger")
-    let editList=document.getElementsByClassName("btn-warning")
-    
+    let delList = document.getElementsByClassName("btn-secondary")
+    let changeList = document.getElementsByClassName("btn-danger")
+    let editList = document.getElementsByClassName("btn-warning")
+
     if (roleCheck) {
         window.location.href = '../../';
     }
@@ -55,7 +55,7 @@ function renderUserTable(users) {
 
         row.innerHTML = `
             <td>${user.fullName || "Không có tên"}</td>
-            <td>${user.email || "Không có email"}</td>
+            <td class="d-none d-md-table-cell">${user.email || "Không có email"}</td>
             <td>
                 <select id="role-${userId}" class="form-select">
                     <option value="admin" ${userRole === "admin" ? "selected" : ""}>Admin</option>
@@ -65,10 +65,10 @@ function renderUserTable(users) {
             </td>
             <td>${user.locked ? "🔒 Khóa" : "✅ Hoạt động"}</td>
             <td>
-                <button class="btn btn-primary btn-sm" onclick="saveRole('${userId}')">Lưu</button>
-                <button class="btn btn-warning btn-sm" onclick="resetPassword('${user.email}')">Reset mật khẩu</button>
-                <button class="btn btn-danger btn-sm" onclick="toggleLock('${userId}', ${user.locked})">
-                    ${user.locked ? "Mở khóa" : "Khóa"}
+                <button data-bs-toggle="tooltip" data-bs-placement="top" title="Lưu" class="btn btn-primary btn-sm" onclick="saveRole('${userId}')"><i class="fa-solid fa-floppy-disk"></i></button>
+                <button data-bs-toggle="tooltip" data-bs-placement="top" title="Reset mật khẩu" class="btn btn-warning btn-sm" onclick="resetPassword('${user.email}')"><i class="fa-solid fa-rotate-right"></i></button>
+                <button data-bs-toggle="tooltip" data-bs-placement="top" title="${user.locked ? "Mở khóa" : "Khóa"}" class="btn btn-danger btn-sm" onclick="toggleLock('${userId}', ${user.locked})">
+                    ${user.locked ? '<i class="fa-solid fa-lock-open"></i>' : '<i class="fa-solid fa-lock"></i>'}
                 </button>
             </td>
         `;
@@ -85,14 +85,14 @@ function saveRole(userId) {
         .then(() => showToast(`Vai trò đã cập nhật thành ${newRole}!`))
         .catch((error) => {
             console.error("Lỗi khi cập nhật:", error);
-            showToast("Lỗi khi cập nhật vai trò!","error");
+            showToast("Lỗi khi cập nhật vai trò!", "error");
         });
 }
 
 // Reset mật khẩu user
 function resetPassword(email) {
     if (!email) {
-        showToast("Không tìm thấy email người dùng!","error");
+        showToast("Không tìm thấy email người dùng!", "error");
         return;
     }
 
@@ -100,7 +100,7 @@ function resetPassword(email) {
         .then(() => showToast(`Email đặt lại mật khẩu đã gửi tới ${email}!`))
         .catch((error) => {
             console.error("Lỗi khi reset mật khẩu:", error);
-            showToast("Lỗi khi gửi email. Kiểm tra lại email hoặc quyền admin!","error");
+            showToast("Lỗi khi gửi email. Kiểm tra lại email hoặc quyền admin!", "error");
         });
 }
 
@@ -113,7 +113,7 @@ function toggleLock(userId, isLocked) {
         })
         .catch((error) => {
             console.error("Lỗi khi khóa/mở khóa tài khoản:", error);
-            showToast("Lỗi khi thay đổi trạng thái tài khoản!","error");
+            showToast("Lỗi khi thay đổi trạng thái tài khoản!", "error");
         });
 }
 

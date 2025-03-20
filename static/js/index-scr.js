@@ -60,11 +60,11 @@ function loadDotKham() {
             li.classList.add("list-group-item");
             li.setAttribute("id", `dot_${doc.id}`);
             li.innerHTML = `<strong>${data.name}</strong> - ${data.date} 
-                            <span class="badge bg-${data.active ? 'success' : 'danger'}">${data.active ? 'Hoạt động' : 'Hoàn thành'}</span>
-                            <button class="btn btn-sm btn-danger float-end" onclick="xoaDotKham('${doc.id}')" >Xóa</button>
-                            <button class="btn btn-sm btn-secondary float-end me-2" onclick="toggleStatus('${doc.id}', ${data.active})" >Đổi trạng thái</button>
-                            <button class="btn btn-warning btn-sm float-end me-2" onclick="moModalSuaDotKham('${doc.id}', '${data.name}', '${data.date}')">Sửa</button>
-                            <button class="btn btn-sm btn-primary float-end me-2" onclick="openDotKham('${doc.id}')">Tham gia Khám</button>`;
+                            <span class="badge bg-${data.active ? 'success' : 'danger'} float-start me-1">${data.active ? 'Hoạt động' : 'Hoàn thành'}</span>
+                            <button data-bs-toggle="tooltip" data-bs-placement="top" title="Xóa" class="btn btn-sm btn-danger float-end" onclick="xoaDotKham('${doc.id}')" ><i class="fa-solid fa-trash"></i></button>
+                            <button data-bs-toggle="tooltip" data-bs-placement="top" title="Chuyển trạng thái" class="btn btn-sm btn-secondary float-end me-1" onclick="toggleStatus('${doc.id}', ${data.active})" ><i class="fa-solid fa-square-check"></i></button>
+                            <button data-bs-toggle="tooltip" data-bs-placement="top" title="Sửa" class="btn btn-warning btn-sm float-end me-1" onclick="moModalSuaDotKham('${doc.id}', '${data.name}', '${data.date}')"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button data-bs-toggle="tooltip" data-bs-placement="top" title="Khám" class="btn btn-sm btn-primary float-end me-1" onclick="openDotKham('${doc.id}')"><i class="fa-solid fa-notes-medical"></i></button>`;
             list.appendChild(li);
         });
     });
@@ -215,3 +215,4 @@ document.addEventListener("DOMContentLoaded", function () {
     // Gán giá trị min cho input date
     document.getElementById("dotKhamDate").setAttribute("min", minDate);
 });
+
