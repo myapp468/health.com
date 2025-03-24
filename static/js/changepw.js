@@ -58,6 +58,7 @@ document.getElementById('changePasswordForm').addEventListener('submit', async (
         await user.updatePassword(newPassword);
         alert("Đổi mật khẩu thành công, vui lòng đăng nhập lại!");
         localStorage.removeItem("user_session")
+        localStorage.removeItem("local_name")
         auth.signOut().then(() => window.location.href = 'login.html');
     } catch (error) {
         errorMessage.classList.remove('d-none');

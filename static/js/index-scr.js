@@ -16,6 +16,7 @@ function logout(event) {
             // Chuyển hướng người dùng đến trang đăng nhập
             // window.location.href = "login.html"; // Hoặc bất kỳ trang nào bạn muốn
             localStorage.removeItem("user_session")
+            localStorage.removeItem("local_name")
             window.location.href = './static/page/login.html';
             return
         })

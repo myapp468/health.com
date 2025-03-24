@@ -266,7 +266,7 @@ function showToast(message, type = "success") {
 
 
 
-
+// Load thông tin bệnh nhân
 function loadPatientList() {
     const table = document.getElementById("patientList"); // Bảng danh sách
     const patientListContainer = document.getElementById("patient-list"); // Cột trái
@@ -435,6 +435,15 @@ function loadPatientList() {
 
                     <button id="save-btn-${patientId}" class="btn btn-primary mt-2 save-btn-${patientId}" onclick="saveDiagnosis('${patientId}')">Lưu</button>
                 `;
+                // Hiển thị nút In Phiếu Khám
+                const printButton = document.createElement("button");
+                printButton.innerText = "In Phiếu Khám";
+                printButton.classList.add("btn", "btn-success", "mt-2");
+                printButton.onclick = function () {
+                    printPatientReport(data);
+                };
+
+                diagnosisContainer.appendChild(printButton);
 
                 // 📌 6️⃣ Load dữ liệu đã có từ Firestore
                 db.collection(dotKhamId).doc(patientId).get().then(docSnapshot => {
@@ -511,7 +520,6 @@ function saveVision(patientId) {
     });
 }
 
-
 // 📌 6️⃣ Lưu thông tin vào Firestore
 function saveDiagnosis(patientId) {
     // Lấy giá trị từ dropdown
@@ -519,7 +527,7 @@ function saveDiagnosis(patientId) {
     db.collection("accounts").doc(userSession.user.uid).get().then((doc) => {
         const roleCheck = (doc.data().role == "admin" || doc.data().role == "doctor")
         if (roleCheck) {
-            console.log(roleCheck)
+            // console.log(roleCheck)
             const visionLeftElement = document.getElementById(`vision-left-${patientId}`);
             const visionRightElement = document.getElementById(`vision-right-${patientId}`);
             const diagnosisElement = document.getElementById(`diagnosis-${patientId}`);
@@ -547,7 +555,8 @@ function saveDiagnosis(patientId) {
                 visionRight,
                 diagnosis,
                 treatment,
-                status: "lock" // Cập nhật trạng thái thành "lock"
+                doctor: nameCurrent,
+                status: "lock", // Cập nhật trạng thái thành "lock"
             }).then(() => {
                 showToast("Đã lưu chẩn đoán thành công!");
 
@@ -589,3 +598,88 @@ document.addEventListener("DOMContentLoaded", loadPatientList);
 document.querySelectorAll('input[name="filter"]').forEach((radio) => {
     radio.addEventListener("change", loadPatientList);
 });
+
+
+function printPatientReport(patientData) {
+    const printWindow = window.open('', '', 'width=800,height=600');
+
+    printWindow.document.write(`
+        <html>
+        <head>
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+            integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+            <style>
+                body { font-family: Arial, sans-serif; font-size: 14px; color: black; text-align: center; }
+                .container { width: 80%; margin: auto; text-align: left; }
+                .logo { text-align: center; margin-bottom: 20px; }
+                h2 { text-align: center; font-size: 20px; }
+                .info, .results { margin-bottom: 20px; }
+                .info p, .results p { margin: 5px 0; }
+                .footer { margin-top: 20px; text-align: right; }
+            </style>
+            <link rel="stylesheet" href="../css/loadfont.css">
+        </head>
+        <body>
+            <div class="fluid-container text-center">
+                <div class="row align-items-start">
+                    <div class="col-2">
+                        <div class="logo w-100">
+                            <img src="../img/logo.PNG" width="70%" alt="Logo">
+                        </div>
+                    </div>
+                    <div class="col-8">
+                        <h4 style="font-size:11px;text-align:left"><b>BỆNH VIỆN MẮT HÀ NỘI - HẢI PHÒNG</b></h4>
+                        <p style="font-size:11px;text-align:left">Địa chỉ: Số 03 - Lô 7B Lê Hồng Phong, P. Đông Khê, Q. Ngô Quyền, Thành phố Hải Phòng<br>
+                        Tel: 0225.3566.999 - Hotline: 0825.599.955<br>
+                        Website: https://mathanoihaiphong.com/</p>
+                    </div>
+                    <div class="col-2">
+                        QR
+                    </div>
+                </div>
+            </div>
+            <h1>PHIẾU KHÁM BỆNH</h1>
+
+            <div class="container">
+                <div class="info">
+                    <h4>I.Thông Tin Bệnh Nhân</h4>
+                    <p><strong>Họ và tên:</strong> ${patientData.name}</p>
+                    <p><strong>Ngày sinh:</strong> ${patientData.dob}</p>
+                    <p><strong>Giới tính:</strong> ${patientData.gender}</p>
+                    <p><strong>Địa chỉ:</strong> ${patientData.address}</p>
+                    <p><strong>Số điện thoại:</strong> ${patientData.phone}</p>
+                    <p><strong>BHYT:</strong> ${patientData.bhyt}</p>
+                </div>
+
+                <div class="results">
+                    <h4>II.Kết Quả Khám</h4>
+                    <p><strong>Kết quả đo thị lực</strong></p>
+                    <p><strong>Thị lực mắt trái:</strong> ${patientData.visionLeft || "Chưa đo"}</p>
+                    <p><strong>Thị lực mắt phải:</strong> ${patientData.visionRight || "Chưa đo"}</p>
+
+                    
+                    <p><strong>Chẩn Đoán: </strong>${patientData.diagnosis || "Chưa có"}</p>
+
+                    <p><strong>Chỉ Định: </strong>${patientData.treatment || "Chưa có"}</p>
+                </div>
+
+                <div class="footer" style="text-align:center; position:absolute; right: 200px">
+                    <p><strong>Bác sĩ khám<br><br><br><br><br> ${patientData.doctor}</strong></p>
+                </div>
+            </div>
+
+            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        </body>
+        </html>
+    `);
+
+    printWindow.document.close();
+
+    // Khi trang in đã tải xong, thực hiện in rồi đóng trang
+    printWindow.onload = function () {
+        printWindow.print();
+        setTimeout(() => {
+            printWindow.close();
+        }, 500); // Đợi 0.5 giây rồi đóng trang để tránh lỗi chưa in xong
+    };
+}

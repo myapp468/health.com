@@ -56,6 +56,7 @@ function handleLogin(event) {
                     };
 
                     localStorage.setItem('user_session', JSON.stringify(userSession));
+                    localStorage.setItem('local_name', userData.fullName);
                     window.location.href = "../../"; // Chuyển hướng
                 } else {
                     document.getElementById("error-login").innerText = "Không tìm thấy tài khoản trong hệ thống.";
