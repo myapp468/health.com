@@ -8,18 +8,46 @@ else {
     window.location.href = './login.html';
 }
 
-// Check phân quyền
-db.collection("accounts").doc(userSession.user.uid).get().then((doc) => {
-    const roleCheck = (doc.data().role != "admin")
-    if (roleCheck) {
-        document.getElementById("adminRole").classList.add("d-none")
+// Tạo id đợt khám
+function getDotKhamIdFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("id"); // Lấy giá trị của tham số 'id'
+}
+const dotKhamId = getDotKhamIdFromURL();
+if (dotKhamId === null) {
+    window.location.href = "../../"
+}
+
+// Check trạng thái đợt khám
+db.collection("dot_kham").doc(dotKhamId).get().then((doc) => {
+    if (doc.data()==undefined) {
+        window.location.href = "../../"
     }
-    else {
-        document.getElementById("adminRole").classList.add("d-block")
-    }
+    let activeState = !doc.data().active
+    document.getElementById("btnAdd").innerHTML += `
+    <button class="btn btn-warning mb-2 text-white" data-bs-toggle="modal" data-bs-target="#exampleModal"
+        id="addPatient" ${activeState ? "disabled" : ""}>
+        Thêm bệnh nhân
+    </button>`
 }).catch((error) => {
     console.log("Error getting document:", error);
 });
+
+// Check thêm menu phân quyền
+db.collection("accounts").doc(userSession.user.uid).get().then((doc) => {
+    const roleCheck = (doc.data().role == "admin")
+    localStorage.setItem("roleKey", doc.data().role)
+    document.getElementById("menuList").innerHTML += roleCheck ? `
+        <li class="nav-item">
+            <a class="nav-link" href="./checkaccount.html" id="adminRole">Phân quyền</a>
+        </li>`: ""
+    const roleExecel = (doc.data().role == "admin" || doc.data().role == "cs" || doc.data().role == "community")
+    document.getElementById("btnAdd").innerHTML += roleExecel ? `<button class="btn btn-success mb-2 ms-2" onclick="exportToExcel()">Xuất Excel</button>` : ""
+}).catch((error) => {
+    console.log("Error getting document:", error);
+});
+const roleKey = localStorage.getItem("roleKey")
+localStorage.removeItem("roleKey")
 
 document.getElementById("scannerInput").addEventListener("input", function () {
     const dataString = this.value.trim();
@@ -78,29 +106,6 @@ document.getElementById("scannerInput").addEventListener("input", function () {
         this.value = "";  // Xóa trường nhập scanner sau khi xử lý
     }
 });
-
-// Tạo id đợt khám
-function getDotKhamIdFromURL() {
-    const params = new URLSearchParams(window.location.search);
-    return params.get("id"); // Lấy giá trị của tham số 'id'
-}
-const dotKhamId = getDotKhamIdFromURL();
-if (dotKhamId === null) {
-    window.location.href = "../../"
-}
-db.collection("dot_kham").doc(dotKhamId).get().then((doc) => {
-    // if (!doc.data().active) {
-    //     document.getElementById("addPatient").disabled = true
-    // }
-    document.getElementById("btnAdd").innerHTML += `<button class="btn btn-warning mb-2 text-white" data-bs-toggle="modal" data-bs-target="#exampleModal"
-                                                        id="addPatient" ${!doc.data().active ? "disabled" : ""}>
-                                                        Thêm bệnh nhân
-                                                    </button>`
-}).catch((error) => {
-    console.log("Error getting document:", error);
-});
-// document.getElementById("addPatient")
-
 
 // Hàm chuyển đổi ngày từ "ddMMyyyy" sang "yyyy-MM-dd"
 function formatDate(dateStr) {
@@ -235,14 +240,15 @@ function exportToExcel() {
                     `'${patient.visionLeft || "Chưa đo"}`,
                     `'${patient.visionRight || "Chưa đo"}`,
                     patient.diagnosis || "Chưa có",
-                    patient.treatment || "Chưa có"
+                    patient.treatment || "Chưa có",
+                    patient.appointmentDate || "Chưa có"
                 ]);
             });
 
             let wb = XLSX.utils.book_new();
             let ws = XLSX.utils.aoa_to_sheet([
                 [dotKhamName], // Dòng đầu tiên là tên đợt khám
-                ["STT", "CCCD", "Tên", "Địa chỉ", "SĐT", "Ngày sinh", "Ngày khám", "Giới tính", "BHYT", "Thị lực trái", "Thị lực phải", "Chẩn đoán", "Chỉ định"],
+                ["STT", "CCCD", "Tên", "Địa chỉ", "SĐT", "Ngày sinh", "Ngày khám", "Giới tính", "BHYT", "Thị lực trái", "Thị lực phải", "Chẩn đoán", "Chỉ định","Ngày hẹn"],
                 ...data
             ]);
 
@@ -260,9 +266,6 @@ function exportToExcel() {
         });
     });
 }
-
-
-
 
 // Tạo toast
 function showToast(message, type = "success") {
@@ -284,8 +287,6 @@ function showToast(message, type = "success") {
     toast.show();
 }
 
-
-
 // Load thông tin bệnh nhân
 function loadPatientList() {
     const table = document.getElementById("patientList"); // Bảng danh sách
@@ -296,6 +297,8 @@ function loadPatientList() {
 
     document.getElementById("infoPantient").classList.add("d-md-none");
     document.getElementById("infoPantient").classList.remove("d-md-block");
+    document.getElementById("resultPantient").classList.add("d-md-none");
+    document.getElementById("resultPantient").classList.remove("d-md-block");
 
     function renderPatients(querySnapshot, searchValue = "") {
         table.innerHTML = "";
@@ -319,8 +322,8 @@ function loadPatientList() {
             row.innerHTML = `<td>${data.cccd}</td><td>${data.name} ${statusIcon}</td><td>${data.address}</td>
                              <td>${data.phone}</td><td>${data.dob}</td><td>${data.date}</td>
                              <td>${data.gender}</td><td>${data.bhyt}</td><td>${data.visionLeft || "Chưa đo"}</td>
-                             <td>${data.visionRight || "Chưa đo"}</td><td>${data.diagnosis || "Chưa có"}</td>
-                             <td>${data.treatment || "Chưa có"}</td>`;
+                             <td>${data.visionRight || "Chưa đo"}</td><td>${data.appointmentDate || "Chưa có"}</td>`;
+                            // <td>${data.appointmentSession || "Chưa có"}</td>
 
             const patientDiv = document.createElement("div");
             patientDiv.classList.add("patient-item", "border", "p-2", "mb-2");
@@ -373,6 +376,7 @@ function loadPatientList() {
                              <td>${data.phone}</td><td>${data.dob}</td><td>${data.date}</td>
                              <td>${data.gender}</td><td>${data.bhyt}</td><td>${data.visionLeft || "Chưa đo"}</td>
                              <td>${data.visionRight || "Chưa đo"}</td><td>${data.diagnosis || "Chưa có"}</td>
+                             <td>${data.treatment || "Chưa có"}</td><td>${data.treatment || "Chưa có"}</td>
                              <td>${data.treatment || "Chưa có"}</td>`;
 
             // 📌 2️⃣ Hiển thị danh sách bệnh nhân bên trái
@@ -392,17 +396,24 @@ function loadPatientList() {
 
                 document.getElementById("infoPantient").classList.add("d-md-block");
                 document.getElementById("infoPantient").classList.remove("d-md-none");
+                document.getElementById("resultPantient").classList.add("d-md-block");
+                document.getElementById("resultPantient").classList.remove("d-md-none");
 
                 // 📌 4️⃣ Kiểm tra trạng thái bệnh nhân
                 const isLocked = data.status === "lock";
                 db.collection("dot_kham").doc(dotKhamId).get().then((doc) => {
                     let status = !doc.data().active
+                    // console.log(roleKey == "admin")
                     // 📌 5️⃣ Hiển thị dropdown menu bên phải
+                    let btnSave1 = `<button class="btn ${status ? "btn-secondary" : "btn-primary"} mt-2 save-btn-${patientId}" onclick="saveVision('${patientId}')" ${status ? "disabled" : ""}>Lưu</button>`
+                    let btnSave2 = `<button id="save-btn-${patientId}" class="btn ${status ? "btn-secondary" : "btn-primary"} mt-2 save-btn-${patientId}" onclick="saveDiagnosis('${patientId}')" ${status ? "disabled" : ""}>Lưu</button>`
+                    let btnSaveAdvice = `<button class="btn ${status ? "btn-secondary" : "btn-primary"} mt-2" onclick="saveAdvice('${patientId}')" ${status ? "disabled" : ""}>Lưu tư vấn</button>`;
+                    let today = new Date().toISOString().split("T")[0];
                     diagnosisContainer.innerHTML = `
                         <h4>Chẩn đoán & Chỉ định</h4>
 
                         <label>Thị lực mắt trái:</label>
-                        <select id="vision-left-${patientId}" class="form-select mb-2">
+                        <select id="vision-left-${patientId}" class="form-select mb-2" ${(roleKey == "admin" || roleKey == "nurse" || roleKey == "doctor") ? '' : 'disabled'}>
                             <option value="1/10">1/10</option>
                             <option value="2/10">2/10</option>
                             <option value="3/10">3/10</option>
@@ -419,7 +430,7 @@ function loadPatientList() {
                         </select>
 
                         <label>Thị lực mắt phải:</label>
-                        <select id="vision-right-${patientId}" class="form-select mb-2">
+                        <select id="vision-right-${patientId}" class="form-select mb-2" ${(roleKey == "admin" || roleKey == "nurse" || roleKey == "doctor") ? '' : 'disabled'}>
                             <option value="1/10">1/10</option>
                             <option value="2/10">2/10</option>
                             <option value="3/10">3/10</option>
@@ -434,11 +445,13 @@ function loadPatientList() {
                             <option value="ST+">ST+</option>
                             <option value="ST-">ST-</option>
                         </select>
-                        <button class="btn ${status ? "btn-secondary" : "btn-primary"} mt-2 save-btn-${patientId}" onclick="saveVision('${patientId}')" ${status ? "disabled" : ""}>Lưu</button>
+                        ${(roleKey == "admin" || roleKey == "nurse" || roleKey == "doctor") ? btnSave1 : ""}
+                        
+                        
                         <hr>
 
                         <label>Chẩn đoán:</label>
-                        <select id="diagnosis-${patientId}" class="form-select mb-2">
+                        <select id="diagnosis-${patientId}" class="form-select mb-2" ${(roleKey == "admin" || roleKey == "doctor") ? '' : 'disabled'}>
                             <option value="Bình thường">Bình thường</option>
                             <option value="Cận thị">Cận thị</option>
                             <option value="Viễn thị">Viễn thị</option>
@@ -447,14 +460,29 @@ function loadPatientList() {
                         </select>
 
                         <label>Chỉ định:</label>
-                        <select id="treatment-${patientId}" class="form-select mb-2">
+                        <select id="treatment-${patientId}" class="form-select mb-2" ${(roleKey == "admin" || roleKey == "doctor") ? '' : 'disabled'}>
                             <option value="Không cần điều trị">Không cần điều trị</option>
                             <option value="Kính thuốc">Kính thuốc</option>
                             <option value="Phẫu thuật phaco">Phẫu thuật phaco</option>
                             <option value="Khám chuyên sâu">Khám chuyên sâu</option>
                         </select>
+                        ${(roleKey == "admin" || roleKey == "doctor") ? btnSave2 : ""}
 
-                        <button id="save-btn-${patientId}" class="btn ${status ? "btn-secondary" : "btn-primary"} mt-2 save-btn-${patientId}" onclick="saveDiagnosis('${patientId}')" ${status ? "disabled" : ""}>Lưu</button>
+                        <hr>
+                        <h4>Tư vấn</h4>
+                        <textarea id="advice-${patientId}" class="form-control mb-2" rows="3" 
+                                ${(roleKey == "admin" || roleKey == "doctor" || roleKey == "cs") ? "" : "disabled"}></textarea>
+                        <label>Ngày hẹn:</label>
+                        <input type="date" id="appointment-date-${patientId}" class="form-control mb-2" 
+                            min="${today}" ${(roleKey == "admin" || roleKey == "doctor" || roleKey == "cs") ? "" : "disabled"}>
+
+                        <label>Buổi hẹn:</label>
+                        <select id="appointment-session-${patientId}" class="form-select mb-2" 
+                                ${(roleKey == "admin" || roleKey == "doctor" || roleKey == "cs") ? "" : "disabled"}>
+                            <option value="Sáng">Sáng</option>
+                            <option value="Chiều">Chiều</option>
+                        </select>
+                        ${(roleKey == "admin" || roleKey == "doctor" || roleKey == "cs") ? btnSaveAdvice : ""}
                     `;
                     // Hiển thị nút In Phiếu Khám
                     const printButton = document.createElement("button");
@@ -481,48 +509,49 @@ function loadPatientList() {
                         const visionRightElement = document.getElementById(`vision-right-${patientId}`);
                         const diagnosisElement = document.getElementById(`diagnosis-${patientId}`);
                         const treatmentElement = document.getElementById(`treatment-${patientId}`);
+                        const adviceElement = document.getElementById(`advice-${patientId}`);
+                        const dateAdviceElement = document.getElementById(`appointment-date-${patientId}`);
+                        const sessionElement = document.getElementById(`appointment-session-${patientId}`);
                         // const saveButton = document.getElementById(`save-btn-${patientId}`);
-                        const saveButton = document.getElementsByClassName(`save-btn-${patientId}`);
+                        // const saveButton = document.getElementsByClassName(`save-btn-${patientId}`);
 
 
                         if (visionLeftElement) visionLeftElement.value = patientData.visionLeft || "";
                         if (visionRightElement) visionRightElement.value = patientData.visionRight || "";
                         if (diagnosisElement) diagnosisElement.value = patientData.diagnosis || "";
                         if (treatmentElement) treatmentElement.value = patientData.treatment || "";
+                        if (adviceElement) adviceElement.value = patientData.advice || "";
+                        if (dateAdviceElement) dateAdviceElement.value = patientData.appointmentDate || "";
+                        if (sessionElement) sessionElement.value = patientData.appointmentSession || "";
 
-                        // db.collection("dot_kham").doc(dotKhamId).get().then((doc) => {
-                        //     if (!doc.data().active) {
-                        //         if (visionLeftElement) visionLeftElement.disabled = true;
-                        //         if (visionRightElement) visionRightElement.disabled = true;
-                        //         if (diagnosisElement) diagnosisElement.disabled = true;
-                        //         if (treatmentElement) treatmentElement.disabled = true;
-                        //         for (let index = 0; index < saveButton.length; index++) {
-                        //             saveButton[index].disabled = true;
-                        //             saveButton[index].classList.add("btn-secondary");
-                        //             saveButton[index].classList.remove("btn-primary");
-                        //         }
-                        //     }
-                        // }).catch((error) => {
-                        //     console.log("Error getting document:", error);
-                        // });
-                        // Nếu trạng thái là "lock", disable tất cả
-                        // if (patientData.status === "lock") {
-                        //     if (visionLeftElement) visionLeftElement.disabled = true;
-                        //     if (visionRightElement) visionRightElement.disabled = true;
-                        //     if (diagnosisElement) diagnosisElement.disabled = true;
-                        //     if (treatmentElement) treatmentElement.disabled = true;
-                        //     for (let index = 0; index < saveButton.length; index++) {
-                        //         saveButton[index].disabled = true;
-                        //         saveButton[index].classList.add("btn-secondary");
-                        //         saveButton[index].classList.remove("btn-primary");
-
-                        //     }
-                        // }
                     }
                 });
             });
             patientListContainer.appendChild(patientDiv);
         });
+    });
+}
+
+// ✅ Hàm lưu nội dung tư vấn vào Firestore
+function saveAdvice(patientId) {
+    let adviceText = document.getElementById(`advice-${patientId}`).value;
+    let appointmentDate = document.getElementById(`appointment-date-${patientId}`).value;
+    let appointmentSession = document.getElementById(`appointment-session-${patientId}`).value;
+
+    if (!appointmentDate) {
+        showToast("Vui lòng chọn ngày hẹn!", "warning");
+        return;
+    }
+
+    db.collection("dot_kham").doc(dotKhamId).collection("benh_nhan").doc(patientId).update({
+        advice: adviceText,
+        appointmentDate: formatDateDisplay(appointmentDate),
+        appointmentSession: appointmentSession
+    }).then(() => {
+        showToast("Đã lưu tư vấn!");
+    }).catch((error) => {
+        showToast("Lỗi khi lưu tư vấn!", "error");
+        console.error("Lỗi khi lưu tư vấn:", error);
     });
 }
 
@@ -601,23 +630,6 @@ function saveDiagnosis(patientId) {
             }).then(() => {
                 showToast("Đã lưu chẩn đoán thành công!");
 
-                // Kiểm tra trước khi disable
-                // if (visionLeftElement) visionLeftElement.disabled = true;
-                // if (visionRightElement) visionRightElement.disabled = true;
-                // if (diagnosisElement) diagnosisElement.disabled = true;
-                // if (treatmentElement) treatmentElement.disabled = true;
-
-                // for (let index = 0; index < saveButton.length; index++) {
-                //     saveButton[index].disabled = true;
-                //     saveButton[index].classList.add("btn-secondary");
-                //     saveButton[index].classList.remove("btn-primary");
-
-                // }
-                // if (saveButton) {
-                //     saveButton.disabled = true;
-                //     saveButton.classList.add("btn-secondary");
-                //     saveButton.classList.remove("btn-primary");
-                // }
             }).catch(error => {
                 showToast("Lỗi khi lưu dữ liệu:", "error");
             });
@@ -694,7 +706,6 @@ function printPatientReport(patientData) {
 
                 <div class="results">
                     <h4>II.Kết Quả Khám</h4>
-                    <p><strong>Kết quả đo thị lực</strong></p>
                     <p><strong>Thị lực mắt trái:</strong> ${patientData.visionLeft || "Chưa đo"}</p>
                     <p><strong>Thị lực mắt phải:</strong> ${patientData.visionRight || "Chưa đo"}</p>
 
@@ -702,6 +713,12 @@ function printPatientReport(patientData) {
                     <p><strong>Chẩn Đoán: </strong>${patientData.diagnosis || "Chưa có"}</p>
 
                     <p><strong>Chỉ Định: </strong>${patientData.treatment || "Chưa có"}</p>
+                </div>
+
+                <div >
+                    <h4>III.Tư vấn</h4>
+                    <p><strong>Chỉ Định: </strong>${patientData.advice || "Chưa có"}</p>
+                    <p><strong>Ngày hẹn: </strong>${patientData.appointmentDate || "Chưa có"}</p>
                 </div>
 
                 <div class="footer" style="text-align:center; position:absolute; right: 200px">

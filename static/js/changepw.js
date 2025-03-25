@@ -7,19 +7,18 @@ if (now < userSession?.expiry) {
 else {
     window.location.href = './login.html';
 }
-// Check phân quyền
 
+// Check thêm menu phân quyền
 db.collection("accounts").doc(userSession.user.uid).get().then((doc) => {
-    const roleCheck = (doc.data().role != "admin")
-    if (roleCheck) {
-        document.getElementById("adminRole").classList.add("d-none")
-    }
-    else{
-        document.getElementById("adminRole").classList.add("d-block")
-    }
+    const roleCheck = (doc.data().role == "admin")
+    document.getElementById("menuList").innerHTML+=roleCheck ? `
+        <li class="nav-item">
+            <a class="nav-link" href="./checkaccount.html" id="adminRole">Phân quyền</a>
+        </li>`:""
 }).catch((error) => {
     console.log("Error getting document:", error);
 });
+
 
 
 document.getElementById('changePasswordForm').addEventListener('submit', async (e) => {

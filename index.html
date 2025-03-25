@@ -9,11 +9,12 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="./static/css/loadfont.css">
     <style>
-        .examName{
+        .examName {
             cursor: pointer;
             color: black;
         }
-        .examName:hover{
+
+        .examName:hover {
             color: red;
         }
     </style>
@@ -29,20 +30,19 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0" id="menuList">
                     <li class="nav-item">
                         <a class="nav-link active" aria-current="page" href="./">Trang chủ</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="./static/page/changePwd.html">Đổi mật khẩu</a>
                     </li>
-                    <li class="nav-item" id="adminRole">
-                        <a class="nav-link" href="./static/page/checkaccount.html">Phân quyền</a>
-                    </li>
                 </ul>
                 <form class="d-flex" role="search">
                     <div class="text-white py-2 me-2" id="userName"></div>
-                    <button class="btn btn-danger" type="submit" id="sign-out" onclick="logout()" data-bs-toggle="tooltip" data-bs-placement="top" title="Đăng xuất"><i class="fa-solid fa-right-from-bracket"></i></button>
+                    <button class="btn btn-danger" type="submit" id="sign-out" onclick="logout()"
+                        data-bs-toggle="tooltip" data-bs-placement="top" title="Đăng xuất"><i
+                            class="fa-solid fa-right-from-bracket"></i></button>
                 </form>
             </div>
         </div>
@@ -50,10 +50,17 @@
 
     <div class="container mt-4">
         <h2 class="text-center">Danh Sách Đợt Khám</h2>
-        <button class="btn btn-primary my-3" data-bs-toggle="modal" data-bs-target="#addModal" id="addRoute">Thêm Đợt
-            Khám</button>
+        <label for="filterDotKham">Lọc đợt khám:</label>
+        <select id="filterDotKham" class="form-select my-2" onchange="loadDotKham()">
+            <option value="all">Tất cả</option>
+            <option value="active">Hoạt động</option>
+            <option value="completed">Hoàn thành</option>
+        </select>
+        <span id="addRouteShow"></span>
         <ul class="list-group" id="dotKhamList"></ul>
     </div>
+    
+
 
     <!-- Toast thông báo -->
     <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050;">
@@ -118,9 +125,6 @@
             </div>
         </div>
     </div>
-
-
-
 
 
 

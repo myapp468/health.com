@@ -7,17 +7,16 @@ if (now < userSession?.expiry) {
 else {
     window.location.href = './login.html';
 }
-
-// Check phân quyền
+// Check thêm menu phân quyền
 db.collection("accounts").doc(userSession.user.uid).get().then((doc) => {
-    const roleCheck = (doc.data().role != "admin")
-    let delList = document.getElementsByClassName("btn-secondary")
-    let changeList = document.getElementsByClassName("btn-danger")
-    let editList = document.getElementsByClassName("btn-warning")
-
-    if (roleCheck) {
-        window.location.href = '../../';
+    const roleCheck = (doc.data().role == "admin")
+    if (!roleCheck) {
+        window.location.href = '../../'
     }
+    document.getElementById("menuList").innerHTML+=roleCheck ? `
+        <li class="nav-item">
+            <a class="nav-link" href="./checkaccount.html" id="adminRole">Phân quyền</a>
+        </li>`:""
 }).catch((error) => {
     console.log("Error getting document:", error);
 });
@@ -60,7 +59,9 @@ function renderUserTable(users) {
                 <select id="role-${userId}" class="form-select">
                     <option value="admin" ${userRole === "admin" ? "selected" : ""}>Admin</option>
                     <option value="doctor" ${userRole === "doctor" ? "selected" : ""}>Bác sĩ</option>
-                    <option value="staff" ${userRole === "user" ? "selected" : ""}>Nhân viên</option>
+                    <option value="community" ${userRole === "community" ? "selected" : ""}>Phát triển cộng đồng</option>
+                    <option value="nurse" ${userRole === "nurse" ? "selected" : ""}>Điều dưỡng</option>
+                    <option value="cs" ${userRole === "cs" ? "selected" : ""}>Chăm sóc khách hàng</option>
                 </select>
             </td>
             <td>${user.locked ? "🔒 Khóa" : "✅ Hoạt động"}</td>

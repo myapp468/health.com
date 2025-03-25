@@ -31,12 +31,10 @@ function handleLogin(event) {
     firebase.auth().signInWithEmailAndPassword(email, password)
         .then((userCredential) => {
             var user = userCredential.user;
-
             // Kiểm tra trạng thái khóa trong Firestore
             db.collection("accounts").doc(user.uid).get().then((doc) => {
                 if (doc.exists) {
                     const userData = doc.data();
-
                     if (userData.locked) {
                         // Nếu tài khoản bị khóa, đăng xuất và thông báo
                         firebase.auth().signOut().then(() => {
@@ -54,9 +52,9 @@ function handleLogin(event) {
                         },
                         expiry: new Date().getTime() + 2 * 60 * 60 * 1000 // 2 tiếng
                     };
-
                     localStorage.setItem('user_session', JSON.stringify(userSession));
                     localStorage.setItem('local_name', userData.fullName);
+                    localStorage.setItem('pos_name', capitalizeFirstLetter(userData.role));
                     window.location.href = "../../"; // Chuyển hướng
                 } else {
                     document.getElementById("error-login").innerText = "Không tìm thấy tài khoản trong hệ thống.";
@@ -70,3 +68,7 @@ function handleLogin(event) {
 }
 
 loginForm.addEventListener("submit", handleLogin);
+
+function capitalizeFirstLetter(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+}

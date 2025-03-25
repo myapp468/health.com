@@ -7,8 +7,28 @@ else {
     window.location.href = './static/page/login.html';
 }
 
+function capitalizeFirstLetter(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
 // Hiển thị tên
-document.getElementById("userName").innerHTML=localStorage.getItem("local_name")
+var posNameMain=""
+if (localStorage.getItem("pos_name")=="Cs") {
+    posNameMain="Chăm sóc khách hàng"
+}
+else if (localStorage.getItem("pos_name")=="Doctor") {
+    posNameMain="Bác sĩ"
+}
+else if (localStorage.getItem("pos_name")=="Admin") {
+    posNameMain="Admin"
+}
+else if (localStorage.getItem("pos_name")=="Nurse") {
+    posNameMain="Điều dưỡng"
+}
+else if (localStorage.getItem("pos_name")=="Community") {
+    posNameMain="Phát triển cộng đồng"
+}
+document.getElementById("userName").innerHTML = capitalizeFirstLetter(localStorage.getItem("local_name"))+"<br>"+posNameMain
 
 // Đăng xuất
 const signout = document.querySelector("#sign-out");
@@ -19,6 +39,7 @@ function logout(event) {
             // window.location.href = "login.html"; // Hoặc bất kỳ trang nào bạn muốn
             localStorage.removeItem("user_session")
             localStorage.removeItem("local_name")
+            localStorage.removeItem("pos_name")
             window.location.href = './static/page/login.html';
             return
         })
@@ -29,6 +50,16 @@ function logout(event) {
 signout.addEventListener("submit", logout);
 
 
+// Check thêm menu phân quyền
+db.collection("accounts").doc(userSession.user.uid).get().then((doc) => {
+    const roleCheck = (doc.data().role == "admin")
+    document.getElementById("menuList").innerHTML+=roleCheck ? `
+        <li class="nav-item">
+            <a class="nav-link" href="./checkaccount.html" id="adminRole">Phân quyền</a>
+        </li>`:""
+}).catch((error) => {
+    console.log("Error getting document:", error);
+});
 
 // Tạo toast
 function showToast(message, type = "success") {
@@ -62,13 +93,19 @@ function loadDotKham() {
             const li = document.createElement("li");
             li.classList.add("list-group-item");
             li.setAttribute("id", `dot_${doc.id}`);
-            li.innerHTML = `<strong class="examName" onclick="openDotKham('${doc.id}')">${data.name}</strong> - ${data.date} 
-                            <span class="badge bg-${data.active ? 'success' : 'danger'} float-start me-1">${data.active ? 'Hoạt động' : 'Hoàn thành'}</span>
-                            <button data-bs-toggle="tooltip" data-bs-placement="top" title="Xóa" class="btn btn-sm btn-danger float-end" onclick="xoaDotKham('${doc.id}')" ><i class="fa-solid fa-trash"></i></button>
-                            <button data-bs-toggle="tooltip" data-bs-placement="top" title="Chuyển trạng thái" class="btn btn-sm btn-secondary float-end me-1" onclick="toggleStatus('${doc.id}', ${data.active})" ><i class="fa-solid fa-square-check"></i></button>
-                            <button data-bs-toggle="tooltip" data-bs-placement="top" title="Sửa" class="btn btn-warning btn-sm float-end me-1" onclick="moModalSuaDotKham('${doc.id}', '${data.name}', '${data.date}')"><i class="fa-solid fa-pen-to-square"></i></button>
-                            <button data-bs-toggle="tooltip" data-bs-placement="top" title="Khám" class="btn btn-sm btn-primary float-end me-1" onclick="openDotKham('${doc.id}')"><i class="fa-solid fa-notes-medical"></i></button>`;
-            list.appendChild(li);
+            let saveIdExam=doc.id
+            db.collection("accounts").doc(userSession.user.uid).get().then((doc) => {
+                let roleConfirm = (doc.data().role=="admin" || doc.data().role=="community")
+                li.innerHTML = roleConfirm ? `<strong class="examName" onclick="openDotKham('${saveIdExam}')">${data.name}</strong> - ${data.date} 
+                <span class="badge bg-${data.active ? 'success' : 'danger'} float-start me-1">${data.active ? 'Hoạt động' : 'Hoàn thành'}</span>
+                <button data-bs-toggle="tooltip" data-bs-placement="top" title="Xóa" class="btn btn-sm btn-danger float-end" onclick="xoaDotKham('${saveIdExam}')" ><i class="fa-solid fa-trash"></i></button>
+                <button data-bs-toggle="tooltip" data-bs-placement="top" title="Chuyển trạng thái" class="btn btn-sm btn-secondary float-end me-1" onclick="toggleStatus('${saveIdExam}', ${data.active})" ><i class="fa-solid fa-square-check"></i></button>
+                <button data-bs-toggle="tooltip" data-bs-placement="top" title="Sửa" class="btn btn-warning btn-sm float-end me-1" onclick="moModalSuaDotKham('${saveIdExam}', '${data.name}', '${data.date}')"><i class="fa-solid fa-pen-to-square"></i></button>
+                <button data-bs-toggle="tooltip" data-bs-placement="top" title="Khám" class="btn btn-sm btn-primary float-end me-1" onclick="openDotKham('${saveIdExam}')"><i class="fa-solid fa-notes-medical"></i></button>`: `<strong class="examName" onclick="openDotKham('${saveIdExam}')">${data.name}</strong> - ${data.date} 
+                <span class="badge bg-${data.active ? 'success' : 'danger'} float-start me-1">${data.active ? 'Hoạt động' : 'Hoàn thành'}</span><button data-bs-toggle="tooltip" data-bs-placement="top" title="Khám" class="btn btn-sm btn-primary float-end me-1" onclick="openDotKham('${saveIdExam}')"><i class="fa-solid fa-notes-medical"></i></button>`
+                list.appendChild(li);
+            })
+            
         });
     });
 }
@@ -141,33 +178,6 @@ function openDotKham(id) {
 
 loadDotKham();
 
-// Check phân quyền
-db.collection("accounts").doc(userSession.user.uid).get().then((doc) => {
-    const roleCheck = (doc.data().role != "admin")
-    let delList = document.getElementsByClassName("btn-secondary")
-    let changeList = document.getElementsByClassName("btn-danger")
-    let editList = document.getElementsByClassName("btn-warning")
-
-    if (roleCheck) {
-        document.getElementById("addRoute").disabled = true
-        document.getElementById("addRoute").style.display = "none"
-        document.getElementById("adminRole").classList.add("d-none")
-        for (let index = 0; index < delList.length; index++) {
-            delList[index].style.display = "none";
-        }
-        for (let index = 0; index < changeList.length; index++) {
-            changeList[index].style.display = "none";
-        }
-        for (let index = 0; index < editList.length; index++) {
-            editList[index].style.display = "none";
-        }
-    }
-    else {
-        document.getElementById("adminRole").classList.add("d-block")
-    }
-}).catch((error) => {
-    console.log("Error getting document:", error);
-});
 
 // Sửa đợt khám
 function moModalSuaDotKham(id, name, date) {
