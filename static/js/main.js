@@ -463,19 +463,35 @@ function loadPatientList() {
                         if (diagnosisElement) diagnosisElement.value = patientData.diagnosis || "";
                         if (treatmentElement) treatmentElement.value = patientData.treatment || "";
 
-                        // Nếu trạng thái là "lock", disable tất cả
-                        if (patientData.status === "lock") {
-                            if (visionLeftElement) visionLeftElement.disabled = true;
-                            if (visionRightElement) visionRightElement.disabled = true;
-                            if (diagnosisElement) diagnosisElement.disabled = true;
-                            if (treatmentElement) treatmentElement.disabled = true;
-                            for (let index = 0; index < saveButton.length; index++) {
-                                saveButton[index].disabled = true;
-                                saveButton[index].classList.add("btn-secondary");
-                                saveButton[index].classList.remove("btn-primary");
+                        db.collection("dot_kham").doc(dotKhamId).get().then((doc) => {
+                            if (!doc.data().active) {
+                                if (visionLeftElement) visionLeftElement.disabled = true;
+                                if (visionRightElement) visionRightElement.disabled = true;
+                                if (diagnosisElement) diagnosisElement.disabled = true;
+                                if (treatmentElement) treatmentElement.disabled = true;
+                                for (let index = 0; index < saveButton.length; index++) {
+                                    saveButton[index].disabled = true;
+                                    saveButton[index].classList.add("btn-secondary");
+                                    saveButton[index].classList.remove("btn-primary");
 
+                                }
                             }
-                        }
+                        }).catch((error) => {
+                            console.log("Error getting document:", error);
+                        });
+                        // Nếu trạng thái là "lock", disable tất cả
+                        // if (patientData.status === "lock") {
+                        //     if (visionLeftElement) visionLeftElement.disabled = true;
+                        //     if (visionRightElement) visionRightElement.disabled = true;
+                        //     if (diagnosisElement) diagnosisElement.disabled = true;
+                        //     if (treatmentElement) treatmentElement.disabled = true;
+                        //     for (let index = 0; index < saveButton.length; index++) {
+                        //         saveButton[index].disabled = true;
+                        //         saveButton[index].classList.add("btn-secondary");
+                        //         saveButton[index].classList.remove("btn-primary");
+
+                        //     }
+                        // }
                     }
                 });
             });
@@ -561,17 +577,17 @@ function saveDiagnosis(patientId) {
                 showToast("Đã lưu chẩn đoán thành công!");
 
                 // Kiểm tra trước khi disable
-                if (visionLeftElement) visionLeftElement.disabled = true;
-                if (visionRightElement) visionRightElement.disabled = true;
-                if (diagnosisElement) diagnosisElement.disabled = true;
-                if (treatmentElement) treatmentElement.disabled = true;
+                // if (visionLeftElement) visionLeftElement.disabled = true;
+                // if (visionRightElement) visionRightElement.disabled = true;
+                // if (diagnosisElement) diagnosisElement.disabled = true;
+                // if (treatmentElement) treatmentElement.disabled = true;
 
-                for (let index = 0; index < saveButton.length; index++) {
-                    saveButton[index].disabled = true;
-                    saveButton[index].classList.add("btn-secondary");
-                    saveButton[index].classList.remove("btn-primary");
+                // for (let index = 0; index < saveButton.length; index++) {
+                //     saveButton[index].disabled = true;
+                //     saveButton[index].classList.add("btn-secondary");
+                //     saveButton[index].classList.remove("btn-primary");
 
-                }
+                // }
                 // if (saveButton) {
                 //     saveButton.disabled = true;
                 //     saveButton.classList.add("btn-secondary");
