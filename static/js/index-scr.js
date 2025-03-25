@@ -60,7 +60,7 @@ function loadDotKham() {
             const li = document.createElement("li");
             li.classList.add("list-group-item");
             li.setAttribute("id", `dot_${doc.id}`);
-            li.innerHTML = `<strong>${data.name}</strong> - ${data.date} 
+            li.innerHTML = `<strong class="examName" onclick="openDotKham('${doc.id}')">${data.name}</strong> - ${data.date} 
                             <span class="badge bg-${data.active ? 'success' : 'danger'} float-start me-1">${data.active ? 'Hoạt động' : 'Hoàn thành'}</span>
                             <button data-bs-toggle="tooltip" data-bs-placement="top" title="Xóa" class="btn btn-sm btn-danger float-end" onclick="xoaDotKham('${doc.id}')" ><i class="fa-solid fa-trash"></i></button>
                             <button data-bs-toggle="tooltip" data-bs-placement="top" title="Chuyển trạng thái" class="btn btn-sm btn-secondary float-end me-1" onclick="toggleStatus('${doc.id}', ${data.active})" ><i class="fa-solid fa-square-check"></i></button>
