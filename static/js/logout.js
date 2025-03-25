@@ -17,3 +17,5 @@ function logout(event) {
         });
 }
 signout.addEventListener("submit", logout);
+
+document.getElementById("userName").innerHTML=localStorage.getItem("local_name")

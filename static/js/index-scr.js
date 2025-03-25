@@ -7,6 +7,8 @@ else {
     window.location.href = './static/page/login.html';
 }
 
+// Hiển thị tên
+document.getElementById("userName").innerHTML=localStorage.getItem("local_name")
 
 // Đăng xuất
 const signout = document.querySelector("#sign-out");
@@ -76,7 +78,6 @@ function loadDotKham() {
 function themDotKham() {
     const name = document.getElementById("dotKhamName").value.trim();
     const dateInput = document.getElementById("dotKhamDate").value;
-    console.log(dateInput)
 
     if (!name || !dateInput) {
         showToast("Vui lòng nhập đầy đủ thông tin!");
@@ -107,8 +108,6 @@ function themDotKham() {
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             }).then(() => {
                 // Tạo collection "benh_nhan" bên trong document vừa tạo
-                //newDotKhamRef.collection("benh_nhan").add({ placeholder: true });
-
                 showToast("Đã thêm đợt khám thành công!");
                 document.getElementById("dotKhamName").value = "";
                 document.getElementById("dotKhamDate").value = "";
@@ -122,9 +121,6 @@ function themDotKham() {
             showToast("Có lỗi xảy ra, vui lòng thử lại!");
         });
 }
-
-
-
 
 
 function toggleStatus(id, currentStatus) {

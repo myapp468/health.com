@@ -89,9 +89,13 @@ if (dotKhamId === null) {
     window.location.href = "../../"
 }
 db.collection("dot_kham").doc(dotKhamId).get().then((doc) => {
-    if (!doc.data().active) {
-        document.getElementById("addPatient").disabled = true
-    }
+    // if (!doc.data().active) {
+    //     document.getElementById("addPatient").disabled = true
+    // }
+    document.getElementById("btnAdd").innerHTML += `<button class="btn btn-warning mb-2 text-white" data-bs-toggle="modal" data-bs-target="#exampleModal"
+                                                        id="addPatient" ${!doc.data().active ? "disabled" : ""}>
+                                                        Thêm bệnh nhân
+                                                    </button>`
 }).catch((error) => {
     console.log("Error getting document:", error);
 });
@@ -106,6 +110,7 @@ function formatDate(dateStr) {
     return "";
 }
 
+// Thêm bệnh nhân
 document.querySelector(".btn-primary").addEventListener("click", function () {
     const cccd = document.getElementById("id1").value.trim();
     const name = document.getElementById("name").value.trim();
@@ -145,8 +150,11 @@ document.querySelector(".btn-primary").addEventListener("click", function () {
         return;
     }
 
+    // Định nghĩa đường dẫn collection trong Firestore
+    const benhNhanRef = db.collection("dot_kham").doc(dotKhamId).collection("benh_nhan");
+
     // Kiểm tra trùng dữ liệu trong Firestore
-    db.collection(dotKhamId)
+    benhNhanRef
         .where("cccd", "==", cccd)
         .get()
         .then((querySnapshot) => {
@@ -155,9 +163,21 @@ document.querySelector(".btn-primary").addEventListener("click", function () {
                 return;
             }
 
-            // Nếu không trùng, lưu vào Firestore
-            db.collection(dotKhamId).add({
-                cccd, name, address, phone, dob, date, gender, bhyt, status: "open",
+            // Nếu không trùng, thêm bệnh nhân vào Firestore
+            const newBenhNhanRef = benhNhanRef.doc(); // Tạo ID tự động
+            const newBenhNhanId = newBenhNhanRef.id; // Lấy ID vừa tạo
+
+            newBenhNhanRef.set({
+                id: newBenhNhanId, // Lưu ID bệnh nhân
+                cccd,
+                name,
+                address,
+                phone,
+                dob,
+                date,
+                gender,
+                bhyt,
+                status: "open",
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             }).then(() => {
                 // Thêm dữ liệu vào bảng trên giao diện
@@ -168,7 +188,7 @@ document.querySelector(".btn-primary").addEventListener("click", function () {
                 document.getElementById("myForm").reset(); // Xóa dữ liệu nhập
                 var myModal = bootstrap.Modal.getInstance(document.getElementById('exampleModal'));
                 myModal.hide(); // Đóng modal sau khi lưu
-                showToast("Đã lưu bệnh nhân thành công!")
+                showToast("Đã lưu bệnh nhân thành công!");
             }).catch((error) => {
                 console.error("Lỗi khi thêm bệnh nhân:", error);
                 alert("Có lỗi xảy ra khi lưu dữ liệu!");
@@ -176,8 +196,8 @@ document.querySelector(".btn-primary").addEventListener("click", function () {
         }).catch((error) => {
             console.error("Lỗi kiểm tra dữ liệu trùng:", error);
         });
-
 });
+
 
 // Hàm hiển thị ngày tháng theo format DD/MM/YYYY
 function formatDateDisplay(dateString) {
@@ -196,7 +216,7 @@ function exportToExcel() {
 
         let dotKhamName = docSnapshot.data().name || "Đợt khám không có tên";
 
-        db.collection(dotKhamId).orderBy("createdAt", "asc").get().then(querySnapshot => {
+        db.collection("dot_kham").doc(dotKhamId).collection("benh_nhan").orderBy("createdAt", "asc").get().then(querySnapshot => {
             let data = [];
             let index = 1; // Bắt đầu STT từ 1
 
@@ -320,7 +340,7 @@ function loadPatientList() {
         });
     }
 
-    db.collection(dotKhamId).orderBy("createdAt", "desc").onSnapshot((querySnapshot) => {
+    db.collection("dot_kham").doc(dotKhamId).collection("benh_nhan").orderBy("createdAt", "desc").onSnapshot((querySnapshot) => {
         renderPatients(querySnapshot);
         searchInput.addEventListener("keyup", function () {
             const searchValue = searchInput.value.trim();
@@ -332,7 +352,7 @@ function loadPatientList() {
     table.innerHTML = ""; // Xóa bảng cũ để tránh trùng lặp
     patientListContainer.innerHTML = ""; // Xóa danh sách cột trái
 
-    db.collection(dotKhamId).orderBy("createdAt", "desc").onSnapshot((querySnapshot) => {
+    db.collection("dot_kham").doc(dotKhamId).collection("benh_nhan").orderBy("createdAt", "desc").onSnapshot((querySnapshot) => {
         table.innerHTML = ""; // Đảm bảo không trùng lặp bảng
         patientListContainer.innerHTML = ""; // Đảm bảo không trùng lặp danh sách cột trái
 
@@ -375,78 +395,85 @@ function loadPatientList() {
 
                 // 📌 4️⃣ Kiểm tra trạng thái bệnh nhân
                 const isLocked = data.status === "lock";
+                db.collection("dot_kham").doc(dotKhamId).get().then((doc) => {
+                    let status = !doc.data().active
+                    // 📌 5️⃣ Hiển thị dropdown menu bên phải
+                    diagnosisContainer.innerHTML = `
+                        <h4>Chẩn đoán & Chỉ định</h4>
 
-                // 📌 5️⃣ Hiển thị dropdown menu bên phải
-                diagnosisContainer.innerHTML = `
-                    <h4>Chẩn đoán & Chỉ định</h4>
+                        <label>Thị lực mắt trái:</label>
+                        <select id="vision-left-${patientId}" class="form-select mb-2">
+                            <option value="1/10">1/10</option>
+                            <option value="2/10">2/10</option>
+                            <option value="3/10">3/10</option>
+                            <option value="4/10">4/10</option>
+                            <option value="5/10">5/10</option>
+                            <option value="6/10">6/10</option>
+                            <option value="7/10">7/10</option>
+                            <option value="8/10">8/10</option>
+                            <option value="9/10">9/10</option>
+                            <option value="10/10">10/10</option>
+                            <option value="Không đo được">Không đo được</option>
+                            <option value="ST+">ST+</option>
+                            <option value="ST-">ST-</option>
+                        </select>
 
-                    <label>Thị lực mắt trái:</label>
-                    <select id="vision-left-${patientId}" class="form-select mb-2">
-                        <option value="1/10">1/10</option>
-                        <option value="2/10">2/10</option>
-                        <option value="3/10">3/10</option>
-                        <option value="4/10">4/10</option>
-                        <option value="5/10">5/10</option>
-                        <option value="6/10">6/10</option>
-                        <option value="7/10">7/10</option>
-                        <option value="8/10">8/10</option>
-                        <option value="9/10">9/10</option>
-                        <option value="10/10">10/10</option>
-                        <option value="Không đo được">Không đo được</option>
-                        <option value="ST+">ST+</option>
-                        <option value="ST-">ST-</option>
-                    </select>
+                        <label>Thị lực mắt phải:</label>
+                        <select id="vision-right-${patientId}" class="form-select mb-2">
+                            <option value="1/10">1/10</option>
+                            <option value="2/10">2/10</option>
+                            <option value="3/10">3/10</option>
+                            <option value="4/10">4/10</option>
+                            <option value="5/10">5/10</option>
+                            <option value="6/10">6/10</option>
+                            <option value="7/10">7/10</option>
+                            <option value="8/10">8/10</option>
+                            <option value="9/10">9/10</option>
+                            <option value="10/10">10/10</option>
+                            <option value="Không đo được">Không đo được</option>
+                            <option value="ST+">ST+</option>
+                            <option value="ST-">ST-</option>
+                        </select>
+                        <button class="btn ${status ? "btn-secondary" : "btn-primary"} mt-2 save-btn-${patientId}" onclick="saveVision('${patientId}')" ${status ? "disabled" : ""}>Lưu</button>
+                        <hr>
 
-                    <label>Thị lực mắt phải:</label>
-                    <select id="vision-right-${patientId}" class="form-select mb-2">
-                        <option value="1/10">1/10</option>
-                        <option value="2/10">2/10</option>
-                        <option value="3/10">3/10</option>
-                        <option value="4/10">4/10</option>
-                        <option value="5/10">5/10</option>
-                        <option value="6/10">6/10</option>
-                        <option value="7/10">7/10</option>
-                        <option value="8/10">8/10</option>
-                        <option value="9/10">9/10</option>
-                        <option value="10/10">10/10</option>
-                        <option value="Không đo được">Không đo được</option>
-                        <option value="ST+">ST+</option>
-                        <option value="ST-">ST-</option>
-                    </select>
-                    <button class="btn btn-primary mt-2 save-btn-${patientId}" onclick="saveVision('${patientId}')">Lưu</button>
-                    <hr>
+                        <label>Chẩn đoán:</label>
+                        <select id="diagnosis-${patientId}" class="form-select mb-2">
+                            <option value="Bình thường">Bình thường</option>
+                            <option value="Cận thị">Cận thị</option>
+                            <option value="Viễn thị">Viễn thị</option>
+                            <option value="Loạn thị">Loạn thị</option>
+                            <option value="Đục thủy tinh thể">Đục thủy tinh thể</option>
+                        </select>
 
-                    <label>Chẩn đoán:</label>
-                    <select id="diagnosis-${patientId}" class="form-select mb-2">
-                        <option value="Bình thường">Bình thường</option>
-                        <option value="Cận thị">Cận thị</option>
-                        <option value="Viễn thị">Viễn thị</option>
-                        <option value="Loạn thị">Loạn thị</option>
-                        <option value="Đục thủy tinh thể">Đục thủy tinh thể</option>
-                    </select>
+                        <label>Chỉ định:</label>
+                        <select id="treatment-${patientId}" class="form-select mb-2">
+                            <option value="Không cần điều trị">Không cần điều trị</option>
+                            <option value="Kính thuốc">Kính thuốc</option>
+                            <option value="Phẫu thuật phaco">Phẫu thuật phaco</option>
+                            <option value="Khám chuyên sâu">Khám chuyên sâu</option>
+                        </select>
 
-                    <label>Chỉ định:</label>
-                    <select id="treatment-${patientId}" class="form-select mb-2">
-                        <option value="Không cần điều trị">Không cần điều trị</option>
-                        <option value="Kính thuốc">Kính thuốc</option>
-                        <option value="Phẫu thuật phaco">Phẫu thuật phaco</option>
-                        <option value="Khám chuyên sâu">Khám chuyên sâu</option>
-                    </select>
+                        <button id="save-btn-${patientId}" class="btn ${status ? "btn-secondary" : "btn-primary"} mt-2 save-btn-${patientId}" onclick="saveDiagnosis('${patientId}')" ${status ? "disabled" : ""}>Lưu</button>
+                    `;
+                    // Hiển thị nút In Phiếu Khám
+                    const printButton = document.createElement("button");
+                    printButton.innerText = "In Phiếu Khám";
+                    printButton.classList.add("btn", "btn-success", "mt-2");
+                    printButton.onclick = function () {
+                        printPatientReport(data);
+                    };
 
-                    <button id="save-btn-${patientId}" class="btn btn-primary mt-2 save-btn-${patientId}" onclick="saveDiagnosis('${patientId}')">Lưu</button>
-                `;
-                // Hiển thị nút In Phiếu Khám
-                const printButton = document.createElement("button");
-                printButton.innerText = "In Phiếu Khám";
-                printButton.classList.add("btn", "btn-success", "mt-2");
-                printButton.onclick = function () {
-                    printPatientReport(data);
-                };
+                    diagnosisContainer.appendChild(printButton);
 
-                diagnosisContainer.appendChild(printButton);
+                }).catch((error) => {
+                    console.log("Error getting document:", error);
+                });
+
+
 
                 // 📌 6️⃣ Load dữ liệu đã có từ Firestore
-                db.collection(dotKhamId).doc(patientId).get().then(docSnapshot => {
+                db.collection("dot_kham").doc(dotKhamId).collection("benh_nhan").doc(patientId).get().then(docSnapshot => {
                     if (docSnapshot.exists) {
                         const patientData = docSnapshot.data();
 
@@ -463,22 +490,21 @@ function loadPatientList() {
                         if (diagnosisElement) diagnosisElement.value = patientData.diagnosis || "";
                         if (treatmentElement) treatmentElement.value = patientData.treatment || "";
 
-                        db.collection("dot_kham").doc(dotKhamId).get().then((doc) => {
-                            if (!doc.data().active) {
-                                if (visionLeftElement) visionLeftElement.disabled = true;
-                                if (visionRightElement) visionRightElement.disabled = true;
-                                if (diagnosisElement) diagnosisElement.disabled = true;
-                                if (treatmentElement) treatmentElement.disabled = true;
-                                for (let index = 0; index < saveButton.length; index++) {
-                                    saveButton[index].disabled = true;
-                                    saveButton[index].classList.add("btn-secondary");
-                                    saveButton[index].classList.remove("btn-primary");
-
-                                }
-                            }
-                        }).catch((error) => {
-                            console.log("Error getting document:", error);
-                        });
+                        // db.collection("dot_kham").doc(dotKhamId).get().then((doc) => {
+                        //     if (!doc.data().active) {
+                        //         if (visionLeftElement) visionLeftElement.disabled = true;
+                        //         if (visionRightElement) visionRightElement.disabled = true;
+                        //         if (diagnosisElement) diagnosisElement.disabled = true;
+                        //         if (treatmentElement) treatmentElement.disabled = true;
+                        //         for (let index = 0; index < saveButton.length; index++) {
+                        //             saveButton[index].disabled = true;
+                        //             saveButton[index].classList.add("btn-secondary");
+                        //             saveButton[index].classList.remove("btn-primary");
+                        //         }
+                        //     }
+                        // }).catch((error) => {
+                        //     console.log("Error getting document:", error);
+                        // });
                         // Nếu trạng thái là "lock", disable tất cả
                         // if (patientData.status === "lock") {
                         //     if (visionLeftElement) visionLeftElement.disabled = true;
@@ -495,7 +521,6 @@ function loadPatientList() {
                     }
                 });
             });
-
             patientListContainer.appendChild(patientDiv);
         });
     });
@@ -522,7 +547,7 @@ function saveVision(patientId) {
     }
 
     // Cập nhật Firestore
-    db.collection(dotKhamId).doc(patientId).update({
+    db.collection("dot_kham").doc(dotKhamId).collection("benh_nhan").doc(patientId).update({
         visionLeft,
         visionRight,
     }).then(() => {
@@ -566,7 +591,7 @@ function saveDiagnosis(patientId) {
             }
 
             // Cập nhật Firestore
-            db.collection(dotKhamId).doc(patientId).update({
+            db.collection("dot_kham").doc(dotKhamId).collection("benh_nhan").doc(patientId).update({
                 visionLeft,
                 visionRight,
                 diagnosis,
