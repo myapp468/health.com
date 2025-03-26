@@ -12,23 +12,23 @@ function capitalizeFirstLetter(string) {
 }
 
 // Hiển thị tên
-var posNameMain=""
-if (localStorage.getItem("pos_name")=="Cs") {
-    posNameMain="Chăm sóc khách hàng"
+var posNameMain = ""
+if (localStorage.getItem("pos_name") == "Cs") {
+    posNameMain = "Chăm sóc khách hàng"
 }
-else if (localStorage.getItem("pos_name")=="Doctor") {
-    posNameMain="Bác sĩ"
+else if (localStorage.getItem("pos_name") == "Doctor") {
+    posNameMain = "Bác sĩ"
 }
-else if (localStorage.getItem("pos_name")=="Admin") {
-    posNameMain="Admin"
+else if (localStorage.getItem("pos_name") == "Admin") {
+    posNameMain = "Admin"
 }
-else if (localStorage.getItem("pos_name")=="Nurse") {
-    posNameMain="Điều dưỡng"
+else if (localStorage.getItem("pos_name") == "Nurse") {
+    posNameMain = "Điều dưỡng"
 }
-else if (localStorage.getItem("pos_name")=="Community") {
-    posNameMain="Phát triển cộng đồng"
+else if (localStorage.getItem("pos_name") == "Community") {
+    posNameMain = "Phát triển cộng đồng"
 }
-document.getElementById("userName").innerHTML = capitalizeFirstLetter(localStorage.getItem("local_name"))+"<br>"+posNameMain
+document.getElementById("userName").innerHTML = capitalizeFirstLetter(localStorage.getItem("local_name")) + "<br>" + posNameMain
 
 // Đăng xuất
 const signout = document.querySelector("#sign-out");
@@ -53,13 +53,19 @@ signout.addEventListener("submit", logout);
 // Check thêm menu phân quyền
 db.collection("accounts").doc(userSession.user.uid).get().then((doc) => {
     const roleCheck = (doc.data().role == "admin")
-    document.getElementById("menuList").innerHTML+=roleCheck ? `
+    localStorage.setItem("roleKey", doc.data().role)
+    document.getElementById("menuList").innerHTML += roleCheck ? `
         <li class="nav-item">
-            <a class="nav-link" href="./checkaccount.html" id="adminRole">Phân quyền</a>
-        </li>`:""
+            <a class="nav-link" href="./static/page/checkaccount.html" id="adminRole">Phân quyền</a>
+        </li>`: ""
+    document.getElementById("examSession").innerHTML += roleCheck ? `<button class="btn btn-primary my-3" data-bs-toggle="modal" data-bs-target="#addModal" id="addRoute">Thêm Đợt
+            Khám</button>`: ""
 }).catch((error) => {
     console.log("Error getting document:", error);
 });
+const roleKey = localStorage.getItem("roleKey")
+localStorage.removeItem("roleKey")
+
 
 // Tạo toast
 function showToast(message, type = "success") {
@@ -82,34 +88,44 @@ function showToast(message, type = "success") {
 }
 
 // Load đợt khám
+document.querySelectorAll('input[name="dotKhamFilter"]').forEach(radio => {
+    radio.addEventListener('change', loadDotKham);
+});
+
 function loadDotKham() {
+    const filterValue = document.querySelector('input[name="dotKhamFilter"]:checked').value;
     const list = document.getElementById("dotKhamList");
     list.innerHTML = "";
 
-    db.collection("dot_kham").orderBy("createdAt", "desc").onSnapshot(snapshot => {
+    db.collection("dot_kham").orderBy("createdAt", "desc").get().then(snapshot => {
         list.innerHTML = "";
         snapshot.forEach(doc => {
             const data = doc.data();
+            const saveIdExam = doc.id;
+
+            if (filterValue === "active" && !data.active) return;
+            if (filterValue === "completed" && data.active) return;
+
             const li = document.createElement("li");
             li.classList.add("list-group-item");
             li.setAttribute("id", `dot_${doc.id}`);
-            let saveIdExam=doc.id
-            db.collection("accounts").doc(userSession.user.uid).get().then((doc) => {
-                let roleConfirm = (doc.data().role=="admin" || doc.data().role=="community")
+
+            db.collection("accounts").doc(userSession.user.uid).get().then((accountDoc) => {
+                let roleConfirm = (accountDoc.data().role == "admin" || accountDoc.data().role == "community");
                 li.innerHTML = roleConfirm ? `<strong class="examName" onclick="openDotKham('${saveIdExam}')">${data.name}</strong> - ${data.date} 
                 <span class="badge bg-${data.active ? 'success' : 'danger'} float-start me-1">${data.active ? 'Hoạt động' : 'Hoàn thành'}</span>
-                <button data-bs-toggle="tooltip" data-bs-placement="top" title="Xóa" class="btn btn-sm btn-danger float-end" onclick="xoaDotKham('${saveIdExam}')" ><i class="fa-solid fa-trash"></i></button>
+                <button data-bs-toggle="tooltip" data-bs-placement="top" title="Xóa" class="btn btn-sm btn-danger float-end ${accountDoc.data().role == "admin" ? '' : 'd-none'}" onclick="xoaDotKham('${saveIdExam}')" ><i class="fa-solid fa-trash"></i></button>
                 <button data-bs-toggle="tooltip" data-bs-placement="top" title="Chuyển trạng thái" class="btn btn-sm btn-secondary float-end me-1" onclick="toggleStatus('${saveIdExam}', ${data.active})" ><i class="fa-solid fa-square-check"></i></button>
                 <button data-bs-toggle="tooltip" data-bs-placement="top" title="Sửa" class="btn btn-warning btn-sm float-end me-1" onclick="moModalSuaDotKham('${saveIdExam}', '${data.name}', '${data.date}')"><i class="fa-solid fa-pen-to-square"></i></button>
-                <button data-bs-toggle="tooltip" data-bs-placement="top" title="Khám" class="btn btn-sm btn-primary float-end me-1" onclick="openDotKham('${saveIdExam}')"><i class="fa-solid fa-notes-medical"></i></button>`: `<strong class="examName" onclick="openDotKham('${saveIdExam}')">${data.name}</strong> - ${data.date} 
-                <span class="badge bg-${data.active ? 'success' : 'danger'} float-start me-1">${data.active ? 'Hoạt động' : 'Hoàn thành'}</span><button data-bs-toggle="tooltip" data-bs-placement="top" title="Khám" class="btn btn-sm btn-primary float-end me-1" onclick="openDotKham('${saveIdExam}')"><i class="fa-solid fa-notes-medical"></i></button>`
+                <button data-bs-toggle="tooltip" data-bs-placement="top" title="Khám" class="btn btn-sm btn-primary float-end me-1" onclick="openDotKham('${saveIdExam}')"><i class="fa-solid fa-notes-medical"></i></button>`
+                    : `<strong class="examName" onclick="openDotKham('${saveIdExam}')">${data.name}</strong> - ${data.date} 
+                <span class="badge bg-${data.active ? 'success' : 'danger'} float-start me-1">${data.active ? 'Hoạt động' : 'Hoàn thành'}</span>
+                <button data-bs-toggle="tooltip" data-bs-placement="top" title="Khám" class="btn btn-sm btn-primary float-end me-1" onclick="openDotKham('${saveIdExam}')"><i class="fa-solid fa-notes-medical"></i></button>`;
                 list.appendChild(li);
-            })
-            
+            });
         });
     });
 }
-
 
 // Thêm đợt khám
 function themDotKham() {
@@ -128,7 +144,7 @@ function themDotKham() {
     // Kiểm tra trùng tên & ngày trước khi thêm
     db.collection("dot_kham")
         .where("name", "==", name)
-        .where("date", "==", formattedDate) // So sánh với định dạng mới
+        .where("date", "==", formattedDate)
         .get()
         .then((querySnapshot) => {
             if (!querySnapshot.empty) {
@@ -136,21 +152,27 @@ function themDotKham() {
                 return;
             }
 
-            // Nếu không trùng, tiếp tục tạo đợt khám mới
-            const newDotKhamRef = db.collection("dot_kham").doc();
-            newDotKhamRef.set({
+            // Nếu không trùng, thêm vào Firestore
+            db.collection("dot_kham").add({
                 name,
-                date: formattedDate, // Lưu ngày đã định dạng
+                date: formattedDate,
                 active: true,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            }).then(() => {
-                // Tạo collection "benh_nhan" bên trong document vừa tạo
+            }).then((docRef) => {
                 showToast("Đã thêm đợt khám thành công!");
                 document.getElementById("dotKhamName").value = "";
                 document.getElementById("dotKhamDate").value = "";
 
+                // Ẩn modal
                 var modal = bootstrap.Modal.getInstance(document.getElementById("addModal"));
                 modal.hide();
+
+                // 🛠 Thêm trực tiếp vào danh sách
+                db.collection("dot_kham").doc(docRef.id).get().then(doc => {
+                    if (doc.exists) {
+                        chenDotKhamVaoDanhSach(doc);
+                    }
+                });
             });
         })
         .catch(error => {
@@ -159,23 +181,116 @@ function themDotKham() {
         });
 }
 
+// Chèn vào không reload
+function chenDotKhamVaoDanhSach(doc) {
+    const data = doc.data();
+    const saveIdExam = doc.id;
+    const filterValue = document.querySelector('input[name="dotKhamFilter"]:checked').value;
 
-function toggleStatus(id, currentStatus) {
-    db.collection("dot_kham").doc(id).update({ active: !currentStatus });
+    // Nếu bộ lọc không phù hợp với trạng thái của đợt khám, không chèn vào danh sách
+    if ((filterValue === "active" && !data.active) || (filterValue === "completed" && data.active)) {
+        return;
+    }
+
+    const list = document.getElementById("dotKhamList");
+
+    const li = document.createElement("li");
+    li.classList.add("list-group-item");
+    li.setAttribute("id", `dot_${doc.id}`);
+
+    db.collection("accounts").doc(userSession.user.uid).get().then((accountDoc) => {
+        let roleConfirm = (accountDoc.data().role == "admin" || accountDoc.data().role == "community");
+        li.innerHTML = roleConfirm ? `<strong class="examName" onclick="openDotKham('${saveIdExam}')">${data.name}</strong> - ${data.date} 
+        <span class="badge bg-${data.active ? 'success' : 'danger'} float-start me-1">${data.active ? 'Hoạt động' : 'Hoàn thành'}</span>
+        <button data-bs-toggle="tooltip" data-bs-placement="top" title="Xóa" class="btn btn-sm btn-danger float-end ${accountDoc.data().role == "admin" ? '' : 'd-none'}" onclick="xoaDotKham('${saveIdExam}')" ><i class="fa-solid fa-trash"></i></button>
+        <button data-bs-toggle="tooltip" data-bs-placement="top" title="Chuyển trạng thái" class="btn btn-sm btn-secondary float-end me-1" onclick="toggleStatus('${saveIdExam}', ${data.active})" ><i class="fa-solid fa-square-check"></i></button>
+        <button data-bs-toggle="tooltip" data-bs-placement="top" title="Sửa" class="btn btn-warning btn-sm float-end me-1" onclick="moModalSuaDotKham('${saveIdExam}', '${data.name}', '${data.date}')"><i class="fa-solid fa-pen-to-square"></i></button>
+        <button data-bs-toggle="tooltip" data-bs-placement="top" title="Khám" class="btn btn-sm btn-primary float-end me-1" onclick="openDotKham('${saveIdExam}')"><i class="fa-solid fa-notes-medical"></i></button>`
+            : `<strong class="examName" onclick="openDotKham('${saveIdExam}')">${data.name}</strong> - ${data.date} 
+        <span class="badge bg-${data.active ? 'success' : 'danger'} float-start me-1">${data.active ? 'Hoạt động' : 'Hoàn thành'}</span>
+        <button data-bs-toggle="tooltip" data-bs-placement="top" title="Khám" class="btn btn-sm btn-primary float-end me-1" onclick="openDotKham('${saveIdExam}')"><i class="fa-solid fa-notes-medical"></i></button>`;
+
+        list.prepend(li); // Chèn lên đầu danh sách
+    });
 }
 
+// Cập nhật trạng thái
+function toggleStatus(examId, currentStatus) {
+    const newStatus = !currentStatus;
+    db.collection("dot_kham").doc(examId).update({
+        active: newStatus
+    }).then(() => {
+        showToast("Đã cập nhật trạng thái!");
+        // Cập nhật trực tiếp UI
+        capNhatTrangThaiUI(examId, newStatus);
+    }).catch(error => {
+        showToast(`Lỗi: ${error}`, "error");
+    });
+}
+
+// Cập nhật lại UI hàm cập nhật
+function capNhatTrangThaiUI(examId, newStatus) {
+    const filterValue = document.querySelector('input[name="dotKhamFilter"]:checked').value;
+    const listItem = document.getElementById(`dot_${examId}`);
+
+    if (!listItem) return; // Nếu không tìm thấy item, thoát luôn
+
+    // Nếu trạng thái không khớp bộ lọc, xóa khỏi danh sách
+    if ((filterValue === "active" && !newStatus) || (filterValue === "completed" && newStatus)) {
+        listItem.remove();
+        return;
+    }
+
+    // Cập nhật trạng thái trên UI
+    const statusBadge = listItem.querySelector(".badge");
+    statusBadge.classList.remove("bg-success", "bg-danger");
+    statusBadge.classList.add(newStatus ? "bg-success" : "bg-danger");
+    statusBadge.textContent = newStatus ? "Hoạt động" : "Hoàn thành";
+
+    // Cập nhật nút toggle trạng thái
+    const toggleButton = listItem.querySelector(".btn-secondary");
+    toggleButton.setAttribute("onclick", `toggleStatus('${examId}', ${newStatus})`);
+}
+
+
+
+let deletingExamId = null; // Lưu ID đợt khám cần xóa
+
+// Xóa đợt khám
 function xoaDotKham(id) {
-    if (confirm("Bạn có chắc muốn xóa đợt khám này không?")) {
-        db.collection("dot_kham").doc(id).delete().then(() => {
+    deletingExamId = id; // Gán ID đợt khám cần xóa
+    const deleteModal = new bootstrap.Modal(document.getElementById("confirmDeleteModal"));
+    deleteModal.show(); // Hiển thị modal
+}
+
+// Xử lý khi nhấn nút xác nhận xóa
+document.getElementById("confirmDeleteBtn").addEventListener("click", function () {
+    if (deletingExamId) {
+        const tempId=deletingExamId
+        db.collection("dot_kham").doc(deletingExamId).delete().then(() => {
             showToast("Đã xóa đợt khám thành công!");
+            // xoaUpdateUI(deletingExamId); // Cập nhật danh sách
+            const listItem = document.getElementById(`dot_${tempId}`);
+            if (!listItem) return; // Nếu không tìm thấy item, thoát luôn
+            listItem.remove()
+            
+        }).catch(error => {
+            showToast(`Lỗi: ${error}`, "error");
         });
     }
+    deletingExamId = null;
+    const deleteModal = bootstrap.Modal.getInstance(document.getElementById("confirmDeleteModal"));
+    deleteModal.hide(); // Ẩn modal
+});
+
+// Cập nhật ui xóa
+function xoaUpdateUI(delItem) {
+    console.log(delItem)
 }
 
 function openDotKham(id) {
     window.location.href = `./static/page/dotkham.html?id=${id}`;
 }
-
 loadDotKham();
 
 
