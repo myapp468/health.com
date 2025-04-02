@@ -20,7 +20,7 @@ if (dotKhamId === null) {
 
 // Check trạng thái đợt khám
 db.collection("dot_kham").doc(dotKhamId).get().then((doc) => {
-    if (doc.data()==undefined) {
+    if (doc.data() == undefined) {
         window.location.href = "../../"
     }
     let activeState = !doc.data().active
@@ -49,6 +49,7 @@ db.collection("accounts").doc(userSession.user.uid).get().then((doc) => {
 const roleKey = localStorage.getItem("roleKey")
 localStorage.removeItem("roleKey")
 
+// Quét thẻ
 document.getElementById("scannerInput").addEventListener("input", function () {
     const dataString = this.value.trim();
 
@@ -114,6 +115,7 @@ function formatDate(dateStr) {
     }
     return "";
 }
+
 
 // Thêm bệnh nhân
 document.querySelector(".btn-primary").addEventListener("click", function () {
@@ -211,6 +213,15 @@ function formatDateDisplay(dateString) {
     return `${parts[2]}/${parts[1]}/${parts[0]}`; // Đổi từ YYYY-MM-DD -> DD/MM/YYYY
 }
 
+// Đổi lại ngày tháng
+function formatDateForInput(dateStr) {
+    if (dateStr.includes("/")) { // Nếu ngày có dạng dd/MM/yyyy
+        let parts = dateStr.split("/");
+        return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+    }
+    return dateStr; // Nếu đã đúng yyyy-MM-dd, giữ nguyên
+}
+
 // Xuất file Excel với dòng đầu là tên đợt khám và merge cột
 function exportToExcel() {
     db.collection("dot_kham").doc(dotKhamId).get().then(docSnapshot => {
@@ -248,7 +259,7 @@ function exportToExcel() {
             let wb = XLSX.utils.book_new();
             let ws = XLSX.utils.aoa_to_sheet([
                 [dotKhamName], // Dòng đầu tiên là tên đợt khám
-                ["STT", "CCCD", "Tên", "Địa chỉ", "SĐT", "Ngày sinh", "Ngày khám", "Giới tính", "BHYT", "Thị lực trái", "Thị lực phải", "Chẩn đoán", "Chỉ định","Ngày hẹn"],
+                ["STT", "CCCD", "Tên", "Địa chỉ", "SĐT", "Ngày sinh", "Ngày khám", "Giới tính", "BHYT", "Thị lực trái", "Thị lực phải", "Chẩn đoán", "Chỉ định", "Ngày hẹn"],
                 ...data
             ]);
 
@@ -323,7 +334,7 @@ function loadPatientList() {
                              <td>${data.phone}</td><td>${data.dob}</td><td>${data.date}</td>
                              <td>${data.gender}</td><td>${data.bhyt}</td><td>${data.visionLeft || "Chưa đo"}</td>
                              <td>${data.visionRight || "Chưa đo"}</td><td>${data.appointmentDate || "Chưa có"}</td>`;
-                            // <td>${data.appointmentSession || "Chưa có"}</td>
+            // <td>${data.appointmentSession || "Chưa có"}</td>
 
             const patientDiv = document.createElement("div");
             patientDiv.classList.add("patient-item", "border", "p-2", "mb-2");
@@ -527,7 +538,7 @@ function loadPatientList() {
                         if (diagnosisElement) diagnosisElement.value = patientData.diagnosis || "";
                         if (treatmentElement) treatmentElement.value = patientData.treatment || "";
                         if (adviceElement) adviceElement.value = patientData.advice || "";
-                        if (dateAdviceElement) dateAdviceElement.value = patientData.appointmentDate || "";
+                        if (dateAdviceElement) dateAdviceElement.value = formatDateForInput(patientData.appointmentDate) || "";
                         if (sessionElement) sessionElement.value = patientData.appointmentSession || "";
 
                     }
@@ -659,14 +670,113 @@ document.querySelectorAll('input[name="filter"]').forEach((radio) => {
 });
 
 
+// function printPatientReport(patientData) {
+//     const printWindow = window.open('', '', 'width=800,height=600');
+
+//     printWindow.document.write(`
+//         <html>
+//         <head>
+//             <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+//             integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+//             <style>
+//                 body { font-family: Arial, sans-serif; font-size: 14px; color: black; text-align: center; }
+//                 .container { width: 80%; margin: auto; text-align: left; }
+//                 .logo { text-align: center; margin-bottom: 20px; }
+//                 h2 { text-align: center; font-size: 20px; }
+//                 .info, .results { margin-bottom: 20px; }
+//                 .info p, .results p { margin: 5px 0; }
+//                 .footer { margin-top: 20px; text-align: right; }
+//             </style>
+//             <link rel="stylesheet" href="../css/loadfont.css">
+//         </head>
+//         <body>
+//             <div class="fluid-container text-center">
+//                 <div class="row align-items-start">
+//                     <div class="col-2">
+//                         <div class="logo w-100">
+//                             <img src="../img/logo.PNG" width="70%" alt="Logo">
+//                         </div>
+//                     </div>
+//                     <div class="col-8">
+//                         <h4 style="font-size:11px;text-align:left"><b>BỆNH VIỆN MẮT HÀ NỘI - HẢI PHÒNG</b></h4>
+//                         <p style="font-size:11px;text-align:left">Địa chỉ: Số 03 - Lô 7B Lê Hồng Phong, P. Đông Khê, Q. Ngô Quyền, Thành phố Hải Phòng<br>
+//                         Tel: 0225.3566.999 - Hotline: 0825.599.955<br>
+//                         Website: https://mathanoihaiphong.com/</p>
+//                     </div>
+//                     <div class="col-2">
+//                         QR
+//                     </div>
+//                 </div>
+//             </div>
+//             <h1>PHIẾU KHÁM BỆNH</h1>
+
+//             <div class="container">
+//                 <div class="info">
+//                     <h4>I.Thông Tin Bệnh Nhân</h4>
+//                     <p><strong>Họ và tên:</strong> ${patientData.name}</p>
+//                     <p><strong>Ngày sinh:</strong> ${patientData.dob}</p>
+//                     <p><strong>Giới tính:</strong> ${patientData.gender}</p>
+//                     <p><strong>Địa chỉ:</strong> ${patientData.address}</p>
+//                     <p><strong>Số điện thoại:</strong> ${patientData.phone}</p>
+//                     <p><strong>BHYT:</strong> ${patientData.bhyt}</p>
+//                 </div>
+
+//                 <div class="results">
+//                     <h4>II.Kết Quả Khám</h4>
+//                     <p><strong>Thị lực mắt trái:</strong> ${patientData.visionLeft || "Chưa đo"}</p>
+//                     <p><strong>Thị lực mắt phải:</strong> ${patientData.visionRight || "Chưa đo"}</p>
+
+
+//                     <p><strong>Chẩn Đoán: </strong>${patientData.diagnosis || "Chưa có"}</p>
+
+//                     <p><strong>Chỉ Định: </strong>${patientData.treatment || "Chưa có"}</p>
+//                 </div>
+
+//                 <div >
+//                     <h4>III.Tư vấn</h4>
+//                     <p><strong>Chỉ Định: </strong>${patientData.advice || "Chưa có"}</p>
+//                     <p><strong>Ngày hẹn: </strong>${patientData.appointmentDate || "Chưa có"}</p>
+//                 </div>
+
+//                 <div class="footer" style="text-align:center; position:absolute; right: 200px">
+//                     <p><strong>Bác sĩ khám<br><br><br><br><br> ${patientData.doctor}</strong></p>
+//                 </div>
+//             </div>
+
+//             <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+//         </body>
+//         </html>
+//     `);
+
+//     printWindow.document.close();
+
+//     // Khi trang in đã tải xong, thực hiện in rồi đóng trang
+//     printWindow.onload = function () {
+//         printWindow.print();
+//         setTimeout(() => {
+//             printWindow.close();
+//         }, 500); // Đợi 0.5 giây rồi đóng trang để tránh lỗi chưa in xong
+//     };
+// }
+
+// Hàm in update thêm qr
 function printPatientReport(patientData) {
+    const qrData = JSON.stringify({
+        id: patientData.id || "N/A",
+        name: patientData.name,
+        dob: patientData.dob,
+        gender: patientData.gender,
+        phone: patientData.phone,
+        bhyt: patientData.bhyt,
+    });
+
     const printWindow = window.open('', '', 'width=800,height=600');
 
     printWindow.document.write(`
         <html>
         <head>
-            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
-            integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
             <style>
                 body { font-family: Arial, sans-serif; font-size: 14px; color: black; text-align: center; }
                 .container { width: 80%; margin: auto; text-align: left; }
@@ -675,8 +785,8 @@ function printPatientReport(patientData) {
                 .info, .results { margin-bottom: 20px; }
                 .info p, .results p { margin: 5px 0; }
                 .footer { margin-top: 20px; text-align: right; }
+                #qrcode { text-align: center; margin-top: 20px; }
             </style>
-            <link rel="stylesheet" href="../css/loadfont.css">
         </head>
         <body>
             <div class="fluid-container text-center">
@@ -693,7 +803,7 @@ function printPatientReport(patientData) {
                         Website: https://mathanoihaiphong.com/</p>
                     </div>
                     <div class="col-2">
-                        QR
+                        <div id="qrcode"></div> <!-- QR Code sẽ hiển thị tại đây -->
                     </div>
                 </div>
             </div>
@@ -701,7 +811,7 @@ function printPatientReport(patientData) {
 
             <div class="container">
                 <div class="info">
-                    <h4>I.Thông Tin Bệnh Nhân</h4>
+                    <h4>I. Thông Tin Bệnh Nhân</h4>
                     <p><strong>Họ và tên:</strong> ${patientData.name}</p>
                     <p><strong>Ngày sinh:</strong> ${patientData.dob}</p>
                     <p><strong>Giới tính:</strong> ${patientData.gender}</p>
@@ -711,20 +821,17 @@ function printPatientReport(patientData) {
                 </div>
 
                 <div class="results">
-                    <h4>II.Kết Quả Khám</h4>
+                    <h4>II. Kết Quả Khám</h4>
                     <p><strong>Thị lực mắt trái:</strong> ${patientData.visionLeft || "Chưa đo"}</p>
                     <p><strong>Thị lực mắt phải:</strong> ${patientData.visionRight || "Chưa đo"}</p>
-
-                    
-                    <p><strong>Chẩn Đoán: </strong>${patientData.diagnosis || "Chưa có"}</p>
-
-                    <p><strong>Chỉ Định: </strong>${patientData.treatment || "Chưa có"}</p>
+                    <p><strong>Chẩn Đoán:</strong> ${patientData.diagnosis || "Chưa có"}</p>
+                    <p><strong>Chỉ Định:</strong> ${patientData.treatment || "Chưa có"}</p>
                 </div>
 
-                <div >
-                    <h4>III.Tư vấn</h4>
-                    <p><strong>Chỉ Định: </strong>${patientData.advice || "Chưa có"}</p>
-                    <p><strong>Ngày hẹn: </strong>${patientData.appointmentDate || "Chưa có"}</p>
+                <div>
+                    <h4>III. Tư vấn</h4>
+                    <p><strong>Chỉ Định:</strong> ${patientData.advice || "Chưa có"}</p>
+                    <p><strong>Ngày hẹn:</strong> ${patientData.appointmentDate || "Chưa có"}</p>
                 </div>
 
                 <div class="footer" style="text-align:center; position:absolute; right: 200px">
@@ -732,18 +839,23 @@ function printPatientReport(patientData) {
                 </div>
             </div>
 
-            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+            <script>
+                window.onload = function() {
+                    var qrcode = new QRCode(document.getElementById("qrcode"), {
+                        text: ${JSON.stringify(qrData)},
+                        width: 100,
+                        height: 100
+                    });
+                    
+                    setTimeout(() => {
+                        window.print();
+                        window.close();
+                    }, 500);
+                };
+            </script>
         </body>
         </html>
     `);
 
     printWindow.document.close();
-
-    // Khi trang in đã tải xong, thực hiện in rồi đóng trang
-    printWindow.onload = function () {
-        printWindow.print();
-        setTimeout(() => {
-            printWindow.close();
-        }, 500); // Đợi 0.5 giây rồi đóng trang để tránh lỗi chưa in xong
-    };
 }
