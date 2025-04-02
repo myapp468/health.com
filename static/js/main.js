@@ -457,14 +457,20 @@ function loadPatientList() {
                             <option value="Viễn thị">Viễn thị</option>
                             <option value="Loạn thị">Loạn thị</option>
                             <option value="Đục thủy tinh thể">Đục thủy tinh thể</option>
+                            <option value="Mộng mắt">Mộng mắt</option>
+                            <option value="Quặm">Quặm</option>
+                            <option value="bệnh khán">Bệnh về mắt khác</option>
                         </select>
 
                         <label>Chỉ định:</label>
                         <select id="treatment-${patientId}" class="form-select mb-2" ${(roleKey == "admin" || roleKey == "doctor") ? '' : 'disabled'}>
                             <option value="Không cần điều trị">Không cần điều trị</option>
                             <option value="Kính thuốc">Kính thuốc</option>
-                            <option value="Phẫu thuật phaco">Phẫu thuật phaco</option>
                             <option value="Khám chuyên sâu">Khám chuyên sâu</option>
+                            <option value="Phẫu thuật phaco">Phẫu thuật phaco</option>
+                            <option value="Phẫu thuật mộng">Phẫu thuật mộng</option>
+                            <option value="Phẫu thuật quặm">Phẫu thuật quặm</option>
+                            <option value="Phẫu thuật khác">Phẫu thuật khác</option>
                         </select>
                         ${(roleKey == "admin" || roleKey == "doctor") ? btnSave2 : ""}
 

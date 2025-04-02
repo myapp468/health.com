@@ -1,6 +1,6 @@
-body{
+/* body{
     background: linear-gradient(to right, #00cc5c, #0047cc);
-}
+} */
 #login-form,#changepwd-form,#changePasswordForm{
     width: 400px;
     border-radius: 10px;

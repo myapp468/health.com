@@ -15,3 +15,17 @@ body {
 #userName{
     font-size: 12px;
 }
+
+
+.body-bg{
+    background-image: url("../img/healthcare-bg.jpg"); /* Đường dẫn ảnh */
+    background-size: cover; /* Phủ toàn bộ phần tử */
+    background-position: center; /* Căn giữa */
+    background-repeat: no-repeat; /* Không lặp lại */
+}
+
+.body-bg-pw{
+    background-image: url("../img/healthcare-bg.jpg"); /* Đường dẫn ảnh */
+    background-size: cover; /* Phủ toàn bộ phần tử */
+    background-repeat: no-repeat; /* Không lặp lại */
+}
