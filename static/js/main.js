@@ -456,6 +456,41 @@ function loadPatientList() {
                             <option value="ST+">ST+</option>
                             <option value="ST-">ST-</option>
                         </select>
+
+                        <label>Thị lực có kính mắt trái:</label>
+                        <select id="vision-ck-left-${patientId}" class="form-select mb-2" ${(roleKey == "admin" || roleKey == "nurse" || roleKey == "doctor") ? '' : 'disabled'}>
+                            <option value="1/10">1/10</option>
+                            <option value="2/10">2/10</option>
+                            <option value="3/10">3/10</option>
+                            <option value="4/10">4/10</option>
+                            <option value="5/10">5/10</option>
+                            <option value="6/10">6/10</option>
+                            <option value="7/10">7/10</option>
+                            <option value="8/10">8/10</option>
+                            <option value="9/10">9/10</option>
+                            <option value="10/10">10/10</option>
+                            <option value="Không đo được">Không đo được</option>
+                            <option value="ST+">ST+</option>
+                            <option value="ST-">ST-</option>
+                        </select>
+
+                        <label>Thị lực có kính mắt phải:</label>
+                        <select id="vision-ck-right-${patientId}" class="form-select mb-2" ${(roleKey == "admin" || roleKey == "nurse" || roleKey == "doctor") ? '' : 'disabled'}>
+                            <option value="1/10">1/10</option>
+                            <option value="2/10">2/10</option>
+                            <option value="3/10">3/10</option>
+                            <option value="4/10">4/10</option>
+                            <option value="5/10">5/10</option>
+                            <option value="6/10">6/10</option>
+                            <option value="7/10">7/10</option>
+                            <option value="8/10">8/10</option>
+                            <option value="9/10">9/10</option>
+                            <option value="10/10">10/10</option>
+                            <option value="Không đo được">Không đo được</option>
+                            <option value="ST+">ST+</option>
+                            <option value="ST-">ST-</option>
+                        </select>
+
                         ${(roleKey == "admin" || roleKey == "nurse" || roleKey == "doctor") ? btnSave1 : ""}
                         
                         
@@ -524,6 +559,8 @@ function loadPatientList() {
 
                         const visionLeftElement = document.getElementById(`vision-left-${patientId}`);
                         const visionRightElement = document.getElementById(`vision-right-${patientId}`);
+                        const visionLeftElementCk = document.getElementById(`vision-ck-left-${patientId}`);
+                        const visionRightElementCk = document.getElementById(`vision-ck-right-${patientId}`);
                         const diagnosisElement = document.getElementById(`diagnosis-${patientId}`);
                         const treatmentElement = document.getElementById(`treatment-${patientId}`);
                         const adviceElement = document.getElementById(`advice-${patientId}`);
@@ -535,6 +572,8 @@ function loadPatientList() {
 
                         if (visionLeftElement) visionLeftElement.value = patientData.visionLeft || "";
                         if (visionRightElement) visionRightElement.value = patientData.visionRight || "";
+                        if (visionLeftElementCk) visionLeftElementCk.value = patientData.visionLeftCk || "";
+                        if (visionRightElementCk) visionRightElementCk.value = patientData.visionRightCk || "";
                         if (diagnosisElement) diagnosisElement.value = patientData.diagnosis || "";
                         if (treatmentElement) treatmentElement.value = patientData.treatment || "";
                         if (adviceElement) adviceElement.value = patientData.advice || "";
@@ -577,6 +616,8 @@ function saveVision(patientId) {
     // Lấy giá trị từ dropdown
     const visionLeftElement = document.getElementById(`vision-left-${patientId}`);
     const visionRightElement = document.getElementById(`vision-right-${patientId}`);
+    const visionLeftElementCk = document.getElementById(`vision-ck-left-${patientId}`);
+    const visionRightElementCk = document.getElementById(`vision-ck-right-${patientId}`);
 
     // Kiểm tra nếu không tìm thấy phần tử
     if (!visionLeftElement || !visionRightElement) {
@@ -586,8 +627,10 @@ function saveVision(patientId) {
 
     const visionLeft = visionLeftElement.value;
     const visionRight = visionRightElement.value;
+    const visionLeftCk = visionLeftElementCk.value;
+    const visionRightCk = visionRightElementCk.value;
     // Kiểm tra nếu không tìm thấy phần tử
-    if (!visionLeft || !visionRight) {
+    if (!visionLeft || !visionRight || !visionLeftCk || !visionRightCk) {
         showToast("Chưa có thông tin thị lực", "error");
         return;
     }
@@ -596,6 +639,8 @@ function saveVision(patientId) {
     db.collection("dot_kham").doc(dotKhamId).collection("benh_nhan").doc(patientId).update({
         visionLeft,
         visionRight,
+        visionLeftCk,
+        visionRightCk,
     }).then(() => {
         showToast("Đã lưu kết quả thị lực!");
 
@@ -775,67 +820,119 @@ function printPatientReport(patientData) {
     printWindow.document.write(`
         <html>
         <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>HealthApp</title>
             <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
             <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
             <style>
                 body { font-family: Arial, sans-serif; font-size: 14px; color: black; text-align: center; }
                 .container { width: 80%; margin: auto; text-align: left; }
-                .logo { text-align: center; margin-bottom: 20px; }
-                h2 { text-align: center; font-size: 20px; }
-                .info, .results { margin-bottom: 20px; }
-                .info p, .results p { margin: 5px 0; }
-                .footer { margin-top: 20px; text-align: right; }
-                #qrcode { text-align: center; margin-top: 20px; }
+                .logo { text-align: center}
+                #qrcode { text-align: center; width:100%}
+                table {width: 100%;border-collapse: collapse;}
+                th, td {border: 1px solid black;text-align: center;}
+                th {background-color: #f2f2f2;}
+                p{line-height:12px}
+                @media print {
+                    @page { margin-top: 10px; }
+                    body { margin: 0; padding: 10px; }
+                }
             </style>
         </head>
         <body>
             <div class="fluid-container text-center">
                 <div class="row align-items-start">
                     <div class="col-2">
-                        <div class="logo w-100">
+                        <div class="logo w-100 py-2">
                             <img src="../img/logo.PNG" width="70%" alt="Logo">
                         </div>
                     </div>
-                    <div class="col-8">
-                        <h4 style="font-size:11px;text-align:left"><b>BỆNH VIỆN MẮT HÀ NỘI - HẢI PHÒNG</b></h4>
-                        <p style="font-size:11px;text-align:left">Địa chỉ: Số 03 - Lô 7B Lê Hồng Phong, P. Đông Khê, Q. Ngô Quyền, Thành phố Hải Phòng<br>
+                    <div class="col-10">
+                        <h4 style="font-size:10px;text-align:left"><b>BỆNH VIỆN MẮT HÀ NỘI - HẢI PHÒNG</b></h4>
+                        <p style="font-size:10px;text-align:left">Địa chỉ: Số 03 - Lô 7B Lê Hồng Phong, P. Đông Khê, Q. Ngô Quyền, Thành phố Hải Phòng<br>
                         Tel: 0225.3566.999 - Hotline: 0825.599.955<br>
                         Website: https://mathanoihaiphong.com/</p>
                     </div>
-                    <div class="col-2">
-                        <div id="qrcode"></div> <!-- QR Code sẽ hiển thị tại đây -->
-                    </div>
                 </div>
             </div>
-            <h1>PHIẾU KHÁM BỆNH</h1>
+            <h3>PHIẾU KHÁM BỆNH</h3>
 
-            <div class="container">
-                <div class="info">
-                    <h4>I. Thông Tin Bệnh Nhân</h4>
-                    <p><strong>Họ và tên:</strong> ${patientData.name}</p>
-                    <p><strong>Ngày sinh:</strong> ${patientData.dob}</p>
-                    <p><strong>Giới tính:</strong> ${patientData.gender}</p>
-                    <p><strong>Địa chỉ:</strong> ${patientData.address}</p>
-                    <p><strong>Số điện thoại:</strong> ${patientData.phone}</p>
-                    <p><strong>BHYT:</strong> ${patientData.bhyt}</p>
+            <div class="fluid-container">
+                <div class="info text-start">
+                    <h6>I. Thông Tin Bệnh Nhân</h6>
+                    <div class="fluid-container">
+                        <div class="row align-items-start">
+                            <div class="col-6">
+                                <p><strong>Họ và tên:</strong>${patientData.name}</p>
+                            </div>
+                            <div class="col-6">
+                                <p><strong>Ngày sinh:</strong> ${patientData.dob}</p>
+                            </div>
+                            <div class="col-6">
+                                <p><strong>Số điện thoại:</strong> ${patientData.phone}</p>
+                            </div>
+                            <div class="col-6">
+                                <p><strong>Giới tính:</strong> ${patientData.gender}</p>
+                            </div>
+                            <div class="col-6"><p><strong>BHYT:</strong> ${patientData.bhyt}</p></div>
+                            <div class="col-6"><p><strong>CCCD:</strong> ${patientData.cccd}</p></div>
+                            <div class="col-12">
+                                <p><strong>Địa chỉ:</strong> ${patientData.address}</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-
-                <div class="results">
-                    <h4>II. Kết Quả Khám</h4>
-                    <p><strong>Thị lực mắt trái:</strong> ${patientData.visionLeft || "Chưa đo"}</p>
-                    <p><strong>Thị lực mắt phải:</strong> ${patientData.visionRight || "Chưa đo"}</p>
-                    <p><strong>Chẩn Đoán:</strong> ${patientData.diagnosis || "Chưa có"}</p>
+                <div class="results text-start">
+                    <h6>II. Kết Quả Khám</h6>
+                    <table>
+                        <tr>
+                            <th class="py-2"></th>
+                            <th class="py-2">TLKK</th>
+                            <th class="py-2">TLCK</th>
+                            <th class="py-2">Cầu</th>
+                            <th class="py-2">Trụ</th>
+                            <th class="py-2">Trục</th>
+                            <th class="py-2">ADD</th>
+                        </tr>
+                        <tr>
+                            <td><strong>Mắt phải</strong></td>
+                            <td>${patientData.visionRight || ""}</td>
+                            <td>${patientData.visionRightCk || ""}</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Mắt trái</strong></td>
+                            <td>${patientData.visionLeft || ""}</td>
+                            <td>${patientData.visionLeftCk || ""}</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                    </table>
+                    <p class="mt-2"><strong>Chẩn Đoán:</strong> ${patientData.diagnosis || "Chưa có"}</p>
                     <p><strong>Chỉ Định:</strong> ${patientData.treatment || "Chưa có"}</p>
                 </div>
 
-                <div>
-                    <h4>III. Tư vấn</h4>
-                    <p><strong>Chỉ Định:</strong> ${patientData.advice || "Chưa có"}</p>
-                    <p><strong>Ngày hẹn:</strong> ${patientData.appointmentDate || "Chưa có"}</p>
+                <div class="text-start">
+                    <h6>III. Tư vấn</h6>
+                    <p><strong>Ghi chú:</strong> ${patientData.advice || "Chưa có"}</p>
+                    <p><strong>Ngày hẹn:</strong>${patientData.appointmentSession} ngày ${patientData.appointmentDate || "Chưa có"}</p>
                 </div>
+            </div>
 
-                <div class="footer" style="text-align:center; position:absolute; right: 200px">
-                    <p><strong>Bác sĩ khám<br><br><br><br><br> ${patientData.doctor}</strong></p>
+            <div class="container">
+                <div class="row align-items-start">
+                    <div class="col-8 text-center">
+                        <div id="qrcode"></div> <!-- QR Code sẽ hiển thị tại đây -->
+                    </div>
+                    <div class="col-4 text-center">
+                        <p><strong>Bác sĩ khám<br><br><br><br><br><br><br><br><br> ${patientData.doctor}</strong></p>
+                    </div>
                 </div>
             </div>
 
@@ -856,6 +953,5 @@ function printPatientReport(patientData) {
         </body>
         </html>
     `);
-
     printWindow.document.close();
 }
