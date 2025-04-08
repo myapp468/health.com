@@ -45,7 +45,7 @@
         <h2>Danh Sách Bệnh Nhân</h2>
         <!-- Button trigger modal -->
         <span id="btnAdd">
-            
+
         </span>
         <!-- <button class="btn btn-success mb-2" onclick="exportToExcel()">Xuất Excel</button> -->
         <table class="table table-bordered" id="table-excel">
@@ -182,6 +182,27 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal xác nhận thiếu số điện thoại -->
+    <div class="modal fade" id="confirmNoPhoneModal" tabindex="-1" aria-labelledby="confirmNoPhoneLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmNoPhoneLabel">Thiếu số điện thoại</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                </div>
+                <div class="modal-body">
+                    Bạn chưa nhập số điện thoại. Bạn có chắc chắn muốn tiếp tục không?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancelNoPhone">Không</button>
+                    <button type="button" class="btn btn-primary" id="confirmNoPhone">Có</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <!-- Toast thông báo -->
     <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050;">

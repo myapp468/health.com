@@ -49,64 +49,6 @@ db.collection("accounts").doc(userSession.user.uid).get().then((doc) => {
 const roleKey = localStorage.getItem("roleKey")
 localStorage.removeItem("roleKey")
 
-// Quét thẻ
-document.getElementById("scannerInput").addEventListener("input", function () {
-    const dataString = this.value.trim();
-
-    if (dataString.includes("|")) {
-        const fields = dataString.split("|");
-
-        // Trường hợp quét CCCD có BHYT (7 hoặc nhiều hơn 7 trường)
-        if (fields.length >= 7) {
-            document.getElementById("id1").value = fields[0] || "";  // Số CCCD
-            document.getElementById("name").value = fields[2] || ""; // Họ và tên
-            document.getElementById("dob").value = formatDate(fields[3]) || ""; // Ngày sinh
-
-            if (fields[4] === "Nam") {
-                document.getElementById("male").checked = true;
-            } else if (fields[4] === "Nữ") {
-                document.getElementById("female").checked = true;
-            }
-
-            document.getElementById("address").value = fields[5] || ""; // Địa chỉ
-
-            // Nếu có BHYT (trường thứ 6 trở đi)
-            document.getElementById("bhyt").value = fields[6] || "Không có BHYT";
-
-            // Trường hợp quét thẻ BHYT (5 trường)
-        } else if (fields.length === 5) {
-            document.getElementById("id1").value = "";  // Không có CCCD
-            document.getElementById("name").value = fields[1] || ""; // Họ và tên
-            document.getElementById("dob").value = formatDate(fields[2]) || ""; // Ngày sinh
-
-            if (fields[3] === "Nam") {
-                document.getElementById("male").checked = true;
-            } else if (fields[3] === "Nữ") {
-                document.getElementById("female").checked = true;
-            }
-
-            document.getElementById("address").value = "N/A"; // Không có địa chỉ
-            document.getElementById("bhyt").value = fields[0] || ""; // Số BHYT
-
-            // Trường hợp quét CCCD không có BHYT (6 trường)
-        } else if (fields.length === 6) {
-            document.getElementById("id1").value = fields[0] || "";  // Số CCCD
-            document.getElementById("name").value = fields[2] || ""; // Họ và tên
-            document.getElementById("dob").value = formatDate(fields[3]) || ""; // Ngày sinh
-
-            if (fields[4] === "Nam") {
-                document.getElementById("male").checked = true;
-            } else if (fields[4] === "Nữ") {
-                document.getElementById("female").checked = true;
-            }
-
-            document.getElementById("address").value = fields[5] || ""; // Địa chỉ
-            document.getElementById("bhyt").value = "Không có BHYT"; // Không có thông tin BHYT
-        }
-
-        this.value = "";  // Xóa trường nhập scanner sau khi xử lý
-    }
-});
 
 // Hàm chuyển đổi ngày từ "ddMMyyyy" sang "yyyy-MM-dd"
 function formatDate(dateStr) {
@@ -115,6 +57,133 @@ function formatDate(dateStr) {
     }
     return "";
 }
+
+
+// Hàm giải mã HEX sang UTF-8 có dấu tiếng Việt
+function decodeHexToUtf8(hex) {
+    if (!hex || hex === '-') return '';
+    try {
+        const bytes = hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16));
+        return decodeURIComponent(escape(String.fromCharCode(...bytes)));
+    } catch (e) {
+        return '[Lỗi mã hóa]';
+    }
+}
+
+// Sửa ngày tháng trong bhyt
+function convertDateDDMMYYYYtoYYYYMMDD(dateStr) {
+    if (dateStr && dateStr.includes('/')) {
+        const [dd, mm, yyyy] = dateStr.split('/');
+        return `${yyyy}-${mm}-${dd}`;
+    }
+    return "";
+}
+// Hàm xử lý dữ liệu BHYT
+function handleBHYT(dataString) {
+    const fields = dataString.replace('|$', '').split('|');
+    const hoTen = decodeHexToUtf8(fields[1]);
+
+    // Tự động đoán vị trí địa chỉ
+    let diaChi = decodeHexToUtf8(fields[4]);
+    if (!diaChi || diaChi.length < 10) {
+        diaChi = decodeHexToUtf8(fields[15] || '');
+    }
+
+    document.getElementById("id1").value = "Không có" // Mã định danh
+    document.getElementById("name").value = hoTen || "";
+    document.getElementById("dob").value = convertDateDDMMYYYYtoYYYYMMDD(fields[2]) || "";
+
+    if (fields[3] === "1") {
+        document.getElementById("male").checked = true;
+    } else if (fields[3] === "2") {
+        document.getElementById("female").checked = true;
+    }
+
+    document.getElementById("address").value = diaChi || "N/A";
+    document.getElementById("bhyt").value = fields[0] || "";
+}
+
+
+// Hàm xử lý dữ liệu CCCD
+function handleCCCD(dataString) {
+    const fields = dataString.split("|");
+
+    if (fields.length >= 7) {
+        document.getElementById("id1").value = fields[0] || "";  // CCCD
+        document.getElementById("name").value = fields[2] || ""; // Họ tên
+        document.getElementById("dob").value = formatDate(fields[3]) || "";
+
+        if (fields[4] === "Nam") {
+            document.getElementById("male").checked = true;
+        } else if (fields[4] === "Nữ") {
+            document.getElementById("female").checked = true;
+        }
+
+        document.getElementById("address").value = fields[5] || "";
+        document.getElementById("date").value = formatDate(fields[6]) || "Không có BHYT";
+
+    }
+    // else if (fields.length === 6) {
+    //     document.getElementById("id1").value = fields[0] || "";
+    //     document.getElementById("name").value = fields[2] || "";
+    //     document.getElementById("dob").value = formatDate(fields[3]) || "";
+
+    //     if (fields[4] === "Nam") {
+    //         document.getElementById("male").checked = true;
+    //     } else if (fields[4] === "Nữ") {
+    //         document.getElementById("female").checked = true;
+    //     }
+
+    //     document.getElementById("address").value = fields[5] || "";
+    //     document.getElementById("date").value = "Không có BHYT";
+
+    // } else if (fields.length === 5) {
+    //     document.getElementById("id1").value = "";
+    //     document.getElementById("name").value = fields[1] || "";
+    //     document.getElementById("dob").value = formatDate(fields[2]) || "";
+
+    //     if (fields[3] === "Nam") {
+    //         document.getElementById("male").checked = true;
+    //     } else if (fields[3] === "Nữ") {
+    //         document.getElementById("female").checked = true;
+    //     }
+
+    //     document.getElementById("address").value = "N/A";
+    //     document.getElementById("date").value = formatDate(fields[0]) || "";
+    // }
+}
+
+
+let scanTimeout = null;
+
+document.getElementById("scannerInput").addEventListener("input", function () {
+    clearTimeout(scanTimeout); // Xóa timeout cũ nếu có
+
+    scanTimeout = setTimeout(() => {
+        const dataString = this.value.trim();
+
+        if (dataString.includes("|$")) {
+            handleBHYT(dataString);
+            this.value = "";
+        } else if (dataString.includes("|")) {
+
+            handleCCCD(dataString)
+            this.value = ""; // Xóa input sau xử lý
+        }
+    }, 300);
+});
+
+
+// Reset form khi đóng form
+const modalEl = document.getElementById('exampleModal');
+
+modalEl.addEventListener('hidden.bs.modal', function () {
+    // Reset toàn bộ form
+    document.getElementById('myForm').reset();
+
+    // Xóa nội dung ô quét mã (dù không nằm trong form)
+    document.getElementById('scannerInput').value = "";
+});
 
 
 // Thêm bệnh nhân
@@ -129,13 +198,99 @@ document.querySelector(".btn-primary").addEventListener("click", function () {
     let bhyt = document.getElementById("bhyt").value.trim() || "Không có";
 
     // Kiểm tra nếu BHYT không đủ 15 số, để "Không có"
-    if (!/^\d{15}$/.test(bhyt)) {
-        bhyt = "Không có";
-    }
+    // if (!/^\d{15}$/.test(bhyt)) {
+    //     bhyt = "Không có";
+    // }
 
     if (!cccd || !name) {
-        alert("Vui lòng nhập đầy đủ thông tin!");
+        showToast("Vui lòng nhập đầy đủ thông tin!", "error")
         return;
+    }
+
+    // Nếu thiếu số điện thoại, hiển thị modal xác nhận
+    if (!phone) {
+        const modal = new bootstrap.Modal(document.getElementById("confirmNoPhoneModal"));
+        modal.show();
+
+        // Khi người dùng chọn "Có" -> tiếp tục thêm bệnh nhân
+        document.getElementById("confirmNoPhone").onclick = () => {
+            modal.hide();
+            // Kiểm tra trùng dữ liệu trong bảng
+            const table = document.getElementById("patientList");
+            let isDuplicate = false;
+
+            for (let i = 0; i < table.rows.length; i++) {
+                let rowCCCD = table.rows[i].cells[0]?.innerText;
+                let rowBHYT = table.rows[i].cells[7]?.innerText;
+
+                if ((cccd !== "Không có" && cccd === rowCCCD) || (bhyt !== "Không có" && bhyt === rowBHYT)) {
+                    isDuplicate = true;
+                    break;
+                }
+            }
+
+            if (isDuplicate) {
+                showToast("Thông tin CCCD hoặc BHYT đã tồn tại!", "error")
+                return;
+            }
+
+            // Định nghĩa đường dẫn collection trong Firestore
+            const benhNhanRef = db.collection("dot_kham").doc(dotKhamId).collection("benh_nhan");
+
+            // Kiểm tra trùng dữ liệu trong Firestore
+            benhNhanRef
+                .where("cccd", "!=", "Không có")
+                .get()
+                .then((querySnapshot) => {
+                    const matching = querySnapshot.docs.find(doc => doc.data().cccd === cccd);
+                    if (matching) {
+                        showToast("CCCD này đã tồn tại trong hệ thống!", "error");
+                        return;
+                    }
+
+
+                    // Nếu không trùng, thêm bệnh nhân vào Firestore
+                    const newBenhNhanRef = benhNhanRef.doc(); // Tạo ID tự động
+                    const newBenhNhanId = newBenhNhanRef.id; // Lấy ID vừa tạo
+
+                    newBenhNhanRef.set({
+                        id: newBenhNhanId, // Lưu ID bệnh nhân
+                        cccd,
+                        name,
+                        address,
+                        phone,
+                        dob,
+                        date,
+                        gender,
+                        bhyt,
+                        status: "open",
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    }).then(() => {
+                        // Thêm dữ liệu vào bảng trên giao diện
+                        const row = table.insertRow();
+                        row.innerHTML = `<td>${cccd}</td><td>${name}</td><td>${address}</td><td>${phone}</td>
+                                 <td>${dob}</td><td>${date}</td><td>${gender}</td><td>${bhyt}</td>`;
+
+                        document.getElementById("myForm").reset(); // Xóa dữ liệu nhập
+                        var myModal = bootstrap.Modal.getInstance(document.getElementById('exampleModal'));
+                        myModal.hide(); // Đóng modal sau khi lưu
+                        showToast("Đã lưu bệnh nhân thành công!");
+                    }).catch((error) => {
+                        console.error("Lỗi khi thêm bệnh nhân:", error);
+                        showToast("Có lỗi xảy ra khi lưu dữ liệu!", "error")
+                    });
+                }).catch((error) => {
+                    console.error("Lỗi kiểm tra dữ liệu trùng:", error);
+                });
+            return;
+        };
+
+        // Khi chọn "Không" -> hủy thao tác
+        document.getElementById("cancelNoPhone").onclick = () => {
+            modal.hide();
+        };
+
+        return; // Chặn tiếp tục chạy
     }
 
     // Kiểm tra trùng dữ liệu trong bảng
@@ -146,14 +301,14 @@ document.querySelector(".btn-primary").addEventListener("click", function () {
         let rowCCCD = table.rows[i].cells[0]?.innerText;
         let rowBHYT = table.rows[i].cells[7]?.innerText;
 
-        if (cccd === rowCCCD || (bhyt !== "Không có" && bhyt === rowBHYT)) {
+        if ((cccd !== "Không có" && cccd === rowCCCD) || (bhyt !== "Không có" && bhyt === rowBHYT)) {
             isDuplicate = true;
             break;
         }
     }
 
     if (isDuplicate) {
-        alert("Thông tin CCCD hoặc BHYT đã tồn tại!");
+        showToast("Thông tin CCCD hoặc BHYT đã tồn tại!", "error")
         return;
     }
 
@@ -162,13 +317,15 @@ document.querySelector(".btn-primary").addEventListener("click", function () {
 
     // Kiểm tra trùng dữ liệu trong Firestore
     benhNhanRef
-        .where("cccd", "==", cccd)
+        .where("cccd", "!=", "Không có")
         .get()
         .then((querySnapshot) => {
-            if (!querySnapshot.empty) {
-                alert("CCCD này đã tồn tại trong hệ thống!");
+            const matching = querySnapshot.docs.find(doc => doc.data().cccd === cccd);
+            if (matching) {
+                showToast("CCCD này đã tồn tại trong hệ thống!", "error");
                 return;
             }
+
 
             // Nếu không trùng, thêm bệnh nhân vào Firestore
             const newBenhNhanRef = benhNhanRef.doc(); // Tạo ID tự động
@@ -198,7 +355,7 @@ document.querySelector(".btn-primary").addEventListener("click", function () {
                 showToast("Đã lưu bệnh nhân thành công!");
             }).catch((error) => {
                 console.error("Lỗi khi thêm bệnh nhân:", error);
-                alert("Có lỗi xảy ra khi lưu dữ liệu!");
+                showToast("Có lỗi xảy ra khi lưu dữ liệu!", "error")
             });
         }).catch((error) => {
             console.error("Lỗi kiểm tra dữ liệu trùng:", error);
@@ -226,7 +383,7 @@ function formatDateForInput(dateStr) {
 function exportToExcel() {
     db.collection("dot_kham").doc(dotKhamId).get().then(docSnapshot => {
         if (!docSnapshot.exists) {
-            alert("Không tìm thấy đợt khám!");
+            showToast("Không tìm thấy đợt khám!", "error")
             return;
         }
 
@@ -250,8 +407,11 @@ function exportToExcel() {
                     patient.bhyt,
                     `'${patient.visionLeft || "Chưa đo"}`,
                     `'${patient.visionRight || "Chưa đo"}`,
+                    `'${patient.visionLeftCk || "Chưa đo"}`,
+                    `'${patient.visionRightCk || "Chưa đo"}`,
                     patient.diagnosis || "Chưa có",
                     patient.treatment || "Chưa có",
+                    patient.advice || "Chưa có",
                     patient.appointmentDate || "Chưa có"
                 ]);
             });
@@ -259,7 +419,7 @@ function exportToExcel() {
             let wb = XLSX.utils.book_new();
             let ws = XLSX.utils.aoa_to_sheet([
                 [dotKhamName], // Dòng đầu tiên là tên đợt khám
-                ["STT", "CCCD", "Tên", "Địa chỉ", "SĐT", "Ngày sinh", "Ngày khám", "Giới tính", "BHYT", "Thị lực trái", "Thị lực phải", "Chẩn đoán", "Chỉ định", "Ngày hẹn"],
+                ["STT", "CCCD", "Tên", "Địa chỉ", "SĐT", "Ngày sinh", "Ngày khám", "Giới tính", "BHYT", "TLKK Mắt trái", "TLKK Mắt phải", "TLCK Mắt trái", "TLCK Mắt phải", "Chẩn đoán", "Chỉ định", "Tư vấn", "Ngày hẹn"],
                 ...data
             ]);
 
@@ -630,7 +790,7 @@ function saveVision(patientId) {
     const visionLeftCk = visionLeftElementCk.value;
     const visionRightCk = visionRightElementCk.value;
     // Kiểm tra nếu không tìm thấy phần tử
-    if (!visionLeft || !visionRight || !visionLeftCk || !visionRightCk) {
+    if (!visionLeft || !visionRight) {
         showToast("Chưa có thông tin thị lực", "error");
         return;
     }
@@ -849,8 +1009,8 @@ function printPatientReport(patientData) {
                         </div>
                     </div>
                     <div class="col-10">
-                        <h4 style="font-size:10px;text-align:left"><b>BỆNH VIỆN MẮT HÀ NỘI - HẢI PHÒNG</b></h4>
-                        <p style="font-size:10px;text-align:left">Địa chỉ: Số 03 - Lô 7B Lê Hồng Phong, P. Đông Khê, Q. Ngô Quyền, Thành phố Hải Phòng<br>
+                        <h4 style="font-size:9.5px;text-align:left"><b>BỆNH VIỆN MẮT HÀ NỘI - HẢI PHÒNG</b></h4>
+                        <p style="font-size:9.5px;text-align:left">Địa chỉ: Số 03 - Lô 7B Lê Hồng Phong, P. Đông Khê, Q. Ngô Quyền, Thành phố Hải Phòng<br>
                         Tel: 0225.3566.999 - Hotline: 0825.599.955<br>
                         Website: https://mathanoihaiphong.com/</p>
                     </div>
@@ -890,28 +1050,28 @@ function printPatientReport(patientData) {
                             <th class="py-2"></th>
                             <th class="py-2">TLKK</th>
                             <th class="py-2">TLCK</th>
-                            <th class="py-2">Cầu</th>
-                            <th class="py-2">Trụ</th>
-                            <th class="py-2">Trục</th>
-                            <th class="py-2">ADD</th>
+                            <!-- <th class="py-2">Cầu</th> -->
+                            <!-- <th class="py-2">Trụ</th> -->
+                            <!-- <th class="py-2">Trục</th> -->
+                            <!-- <th class="py-2">ADD</th> -->
                         </tr>
                         <tr>
                             <td><strong>Mắt phải</strong></td>
                             <td>${patientData.visionRight || ""}</td>
                             <td>${patientData.visionRightCk || ""}</td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
+                            <!-- <td></td> -->
+                            <!-- <td></td> -->
+                            <!-- <td></td> -->
+                            <!-- <td></td> -->
                         </tr>
                         <tr>
                             <td><strong>Mắt trái</strong></td>
                             <td>${patientData.visionLeft || ""}</td>
                             <td>${patientData.visionLeftCk || ""}</td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
+                            <!-- <td></td> -->
+                            <!-- <td></td> -->
+                            <!-- <td></td> -->
+                            <!-- <td></td> -->
                         </tr>
                     </table>
                     <p class="mt-2"><strong>Chẩn Đoán:</strong> ${patientData.diagnosis || "Chưa có"}</p>
@@ -938,11 +1098,11 @@ function printPatientReport(patientData) {
 
             <script>
                 window.onload = function() {
-                    var qrcode = new QRCode(document.getElementById("qrcode"), {
-                        text: ${JSON.stringify(qrData)},
-                        width: 100,
-                        height: 100
-                    });
+                    // var qrcode = new QRCode(document.getElementById("qrcode"), {
+                    //     text: ${JSON.stringify(qrData)},
+                    //     width: 100,
+                    //     height: 100
+                    // });
                     
                     setTimeout(() => {
                         window.print();
