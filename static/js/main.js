@@ -1081,7 +1081,7 @@ function printPatientReport(patientData) {
                 <div class="text-start">
                     <h6>III. Tư vấn</h6>
                     <p><strong>Ghi chú:</strong> ${patientData.advice || "Chưa có"}</p>
-                    <p><strong>Ngày hẹn:</strong>${patientData.appointmentSession} ngày ${patientData.appointmentDate || "Chưa có"}</p>
+                    <p><strong>Ngày hẹn:</strong>${patientData.appointmentSession||""} ngày ${patientData.appointmentDate || "Chưa có"}</p>
                 </div>
             </div>
 

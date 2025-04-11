@@ -21,14 +21,14 @@
 <body class="body-bg">
     <div class="container" style="height: 100vh;">
         <div class="row d-flex align-items-center" style="height: 100%;">
-            <form action="" id="login-form" class="bg-light p-5  mx-auto">
+            <form action="" id="login-form" class="bg-light p-5  mx-auto" autocomplete="on">
                 <h1 class="text-center mb-3">Đăng nhập</h1>
                 <div class="form-floating mb-3">
-                    <input type="email" class="form-control" id="inp-email" placeholder="name@example.com">
+                    <input type="email" class="form-control" id="inp-email" placeholder="name@example.com" autocomplete="username">
                     <label for="inp-email">ID</label>
                 </div>
                 <div class="form-floating">
-                    <input type="password" class="form-control" id="inp-pwd" placeholder="Password">
+                    <input type="password" class="form-control" id="inp-pwd" placeholder="Password" autocomplete="current-password">
                     <label for="inp-pwd">Password</label>
                 </div>
                 <h6 class="my-3 text-danger" id="error-login"></h6>
