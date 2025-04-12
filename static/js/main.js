@@ -123,34 +123,6 @@ function handleCCCD(dataString) {
         document.getElementById("date").value = formatDate(fields[6]) || "Không có BHYT";
 
     }
-    // else if (fields.length === 6) {
-    //     document.getElementById("id1").value = fields[0] || "";
-    //     document.getElementById("name").value = fields[2] || "";
-    //     document.getElementById("dob").value = formatDate(fields[3]) || "";
-
-    //     if (fields[4] === "Nam") {
-    //         document.getElementById("male").checked = true;
-    //     } else if (fields[4] === "Nữ") {
-    //         document.getElementById("female").checked = true;
-    //     }
-
-    //     document.getElementById("address").value = fields[5] || "";
-    //     document.getElementById("date").value = "Không có BHYT";
-
-    // } else if (fields.length === 5) {
-    //     document.getElementById("id1").value = "";
-    //     document.getElementById("name").value = fields[1] || "";
-    //     document.getElementById("dob").value = formatDate(fields[2]) || "";
-
-    //     if (fields[3] === "Nam") {
-    //         document.getElementById("male").checked = true;
-    //     } else if (fields[3] === "Nữ") {
-    //         document.getElementById("female").checked = true;
-    //     }
-
-    //     document.getElementById("address").value = "N/A";
-    //     document.getElementById("date").value = formatDate(fields[0]) || "";
-    // }
 }
 
 
@@ -164,10 +136,11 @@ document.getElementById("scannerInput").addEventListener("input", function () {
 
         if (dataString.includes("|$")) {
             handleBHYT(dataString);
+            document.getElementById("saveInfo").innerHTML=dataString
             this.value = "";
         } else if (dataString.includes("|")) {
-
             handleCCCD(dataString)
+            document.getElementById("saveInfo").innerHTML=dataString
             this.value = ""; // Xóa input sau xử lý
         }
     }, 300);
@@ -196,6 +169,7 @@ document.querySelector(".btn-primary").addEventListener("click", function () {
     const date = formatDateDisplay(document.getElementById("date").value);
     const gender = document.getElementById("male").checked ? "Nam" : "Nữ";
     let bhyt = document.getElementById("bhyt").value.trim() || "Không có";
+    const qrResult=document.getElementById("saveInfo").innerText
 
     // Kiểm tra nếu BHYT không đủ 15 số, để "Không có"
     // if (!/^\d{15}$/.test(bhyt)) {
@@ -264,6 +238,7 @@ document.querySelector(".btn-primary").addEventListener("click", function () {
                         gender,
                         bhyt,
                         status: "open",
+                        qrResult,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     }).then(() => {
                         // Thêm dữ liệu vào bảng trên giao diện
@@ -372,6 +347,7 @@ function formatDateDisplay(dateString) {
 
 // Đổi lại ngày tháng
 function formatDateForInput(dateStr) {
+    if (dateStr===undefined) return;
     if (dateStr.includes("/")) { // Nếu ngày có dạng dd/MM/yyyy
         let parts = dateStr.split("/");
         return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
@@ -412,14 +388,15 @@ function exportToExcel() {
                     patient.diagnosis || "Chưa có",
                     patient.treatment || "Chưa có",
                     patient.advice || "Chưa có",
-                    patient.appointmentDate || "Chưa có"
+                    patient.appointmentDate || "Chưa có",
+                    patient.qrResult
                 ]);
             });
 
             let wb = XLSX.utils.book_new();
             let ws = XLSX.utils.aoa_to_sheet([
                 [dotKhamName], // Dòng đầu tiên là tên đợt khám
-                ["STT", "CCCD", "Tên", "Địa chỉ", "SĐT", "Ngày sinh", "Ngày khám", "Giới tính", "BHYT", "TLKK Mắt trái", "TLKK Mắt phải", "TLCK Mắt trái", "TLCK Mắt phải", "Chẩn đoán", "Chỉ định", "Tư vấn", "Ngày hẹn"],
+                ["STT", "CCCD", "Tên", "Địa chỉ", "SĐT", "Ngày sinh", "Ngày khám", "Giới tính", "BHYT", "TLKK Mắt trái", "TLKK Mắt phải", "TLCK Mắt trái", "TLCK Mắt phải", "Chẩn đoán", "Chỉ định", "Tư vấn", "Ngày hẹn","QR"],
                 ...data
             ]);
 
@@ -874,106 +851,18 @@ document.querySelectorAll('input[name="filter"]').forEach((radio) => {
     radio.addEventListener("change", loadPatientList);
 });
 
-
-// function printPatientReport(patientData) {
-//     const printWindow = window.open('', '', 'width=800,height=600');
-
-//     printWindow.document.write(`
-//         <html>
-//         <head>
-//             <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
-//             integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-//             <style>
-//                 body { font-family: Arial, sans-serif; font-size: 14px; color: black; text-align: center; }
-//                 .container { width: 80%; margin: auto; text-align: left; }
-//                 .logo { text-align: center; margin-bottom: 20px; }
-//                 h2 { text-align: center; font-size: 20px; }
-//                 .info, .results { margin-bottom: 20px; }
-//                 .info p, .results p { margin: 5px 0; }
-//                 .footer { margin-top: 20px; text-align: right; }
-//             </style>
-//             <link rel="stylesheet" href="../css/loadfont.css">
-//         </head>
-//         <body>
-//             <div class="fluid-container text-center">
-//                 <div class="row align-items-start">
-//                     <div class="col-2">
-//                         <div class="logo w-100">
-//                             <img src="../img/logo.PNG" width="70%" alt="Logo">
-//                         </div>
-//                     </div>
-//                     <div class="col-8">
-//                         <h4 style="font-size:11px;text-align:left"><b>BỆNH VIỆN MẮT HÀ NỘI - HẢI PHÒNG</b></h4>
-//                         <p style="font-size:11px;text-align:left">Địa chỉ: Số 03 - Lô 7B Lê Hồng Phong, P. Đông Khê, Q. Ngô Quyền, Thành phố Hải Phòng<br>
-//                         Tel: 0225.3566.999 - Hotline: 0825.599.955<br>
-//                         Website: https://mathanoihaiphong.com/</p>
-//                     </div>
-//                     <div class="col-2">
-//                         QR
-//                     </div>
-//                 </div>
-//             </div>
-//             <h1>PHIẾU KHÁM BỆNH</h1>
-
-//             <div class="container">
-//                 <div class="info">
-//                     <h4>I.Thông Tin Bệnh Nhân</h4>
-//                     <p><strong>Họ và tên:</strong> ${patientData.name}</p>
-//                     <p><strong>Ngày sinh:</strong> ${patientData.dob}</p>
-//                     <p><strong>Giới tính:</strong> ${patientData.gender}</p>
-//                     <p><strong>Địa chỉ:</strong> ${patientData.address}</p>
-//                     <p><strong>Số điện thoại:</strong> ${patientData.phone}</p>
-//                     <p><strong>BHYT:</strong> ${patientData.bhyt}</p>
-//                 </div>
-
-//                 <div class="results">
-//                     <h4>II.Kết Quả Khám</h4>
-//                     <p><strong>Thị lực mắt trái:</strong> ${patientData.visionLeft || "Chưa đo"}</p>
-//                     <p><strong>Thị lực mắt phải:</strong> ${patientData.visionRight || "Chưa đo"}</p>
-
-
-//                     <p><strong>Chẩn Đoán: </strong>${patientData.diagnosis || "Chưa có"}</p>
-
-//                     <p><strong>Chỉ Định: </strong>${patientData.treatment || "Chưa có"}</p>
-//                 </div>
-
-//                 <div >
-//                     <h4>III.Tư vấn</h4>
-//                     <p><strong>Chỉ Định: </strong>${patientData.advice || "Chưa có"}</p>
-//                     <p><strong>Ngày hẹn: </strong>${patientData.appointmentDate || "Chưa có"}</p>
-//                 </div>
-
-//                 <div class="footer" style="text-align:center; position:absolute; right: 200px">
-//                     <p><strong>Bác sĩ khám<br><br><br><br><br> ${patientData.doctor}</strong></p>
-//                 </div>
-//             </div>
-
-//             <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-//         </body>
-//         </html>
-//     `);
-
-//     printWindow.document.close();
-
-//     // Khi trang in đã tải xong, thực hiện in rồi đóng trang
-//     printWindow.onload = function () {
-//         printWindow.print();
-//         setTimeout(() => {
-//             printWindow.close();
-//         }, 500); // Đợi 0.5 giây rồi đóng trang để tránh lỗi chưa in xong
-//     };
-// }
-
 // Hàm in update thêm qr
 function printPatientReport(patientData) {
     const qrData = JSON.stringify({
-        id: patientData.id || "N/A",
-        name: patientData.name,
+        cccd: patientData.cccd,
         dob: patientData.dob,
+        name: patientData.name,
         gender: patientData.gender,
-        phone: patientData.phone,
         bhyt: patientData.bhyt,
+        address: patientData.address,
+        phone: patientData.phone,
     });
+    
 
     const printWindow = window.open('', '', 'width=800,height=600');
 
@@ -1050,28 +939,16 @@ function printPatientReport(patientData) {
                             <th class="py-2"></th>
                             <th class="py-2">TLKK</th>
                             <th class="py-2">TLCK</th>
-                            <!-- <th class="py-2">Cầu</th> -->
-                            <!-- <th class="py-2">Trụ</th> -->
-                            <!-- <th class="py-2">Trục</th> -->
-                            <!-- <th class="py-2">ADD</th> -->
                         </tr>
                         <tr>
                             <td><strong>Mắt phải</strong></td>
                             <td>${patientData.visionRight || ""}</td>
                             <td>${patientData.visionRightCk || ""}</td>
-                            <!-- <td></td> -->
-                            <!-- <td></td> -->
-                            <!-- <td></td> -->
-                            <!-- <td></td> -->
                         </tr>
                         <tr>
                             <td><strong>Mắt trái</strong></td>
                             <td>${patientData.visionLeft || ""}</td>
                             <td>${patientData.visionLeftCk || ""}</td>
-                            <!-- <td></td> -->
-                            <!-- <td></td> -->
-                            <!-- <td></td> -->
-                            <!-- <td></td> -->
                         </tr>
                     </table>
                     <p class="mt-2"><strong>Chẩn Đoán:</strong> ${patientData.diagnosis || "Chưa có"}</p>
@@ -1081,7 +958,7 @@ function printPatientReport(patientData) {
                 <div class="text-start">
                     <h6>III. Tư vấn</h6>
                     <p><strong>Ghi chú:</strong> ${patientData.advice || "Chưa có"}</p>
-                    <p><strong>Ngày hẹn:</strong>${patientData.appointmentSession||""} ngày ${patientData.appointmentDate || "Chưa có"}</p>
+                    <p><strong>Ngày hẹn:</strong>${patientData.appointmentSession || ""} ngày ${patientData.appointmentDate || "Chưa có"}</p>
                 </div>
             </div>
 
@@ -1097,21 +974,24 @@ function printPatientReport(patientData) {
             </div>
 
             <script>
-                window.onload = function() {
-                    // var qrcode = new QRCode(document.getElementById("qrcode"), {
-                    //     text: ${JSON.stringify(qrData)},
-                    //     width: 100,
-                    //     height: 100
-                    // });
-                    
-                    setTimeout(() => {
-                        window.print();
-                        window.close();
-                    }, 500);
-                };
+                // window.onload = function() {
+                //     // Tạo mã QR
+                //     new QRCode(document.getElementById("qrcode"), {
+                //         text: encodeURIComponent(${JSON.stringify(qrData)}),
+                //         width: 150,
+                //         height: 150,
+                //         correctLevel: QRCode.CorrectLevel.L
+                //     });
+
+                //     setTimeout(() => {
+                //         window.print();
+                //         window.close();
+                //     }, 500);
+                // };
             </script>
         </body>
         </html>
     `);
     printWindow.document.close();
 }
+
