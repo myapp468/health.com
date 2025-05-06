@@ -136,11 +136,11 @@ document.getElementById("scannerInput").addEventListener("input", function () {
 
         if (dataString.includes("|$")) {
             handleBHYT(dataString);
-            document.getElementById("saveInfo").innerHTML=dataString
+            document.getElementById("saveInfo").innerHTML = dataString
             this.value = "";
         } else if (dataString.includes("|")) {
             handleCCCD(dataString)
-            document.getElementById("saveInfo").innerHTML=dataString
+            document.getElementById("saveInfo").innerHTML = dataString
             this.value = ""; // Xóa input sau xử lý
         }
     }, 300);
@@ -169,12 +169,8 @@ document.querySelector(".btn-primary").addEventListener("click", function () {
     const date = formatDateDisplay(document.getElementById("date").value);
     const gender = document.getElementById("male").checked ? "Nam" : "Nữ";
     let bhyt = document.getElementById("bhyt").value.trim() || "Không có";
-    const qrResult=document.getElementById("saveInfo").innerText
+    const qrResult = document.getElementById("saveInfo").innerText
 
-    // Kiểm tra nếu BHYT không đủ 15 số, để "Không có"
-    // if (!/^\d{15}$/.test(bhyt)) {
-    //     bhyt = "Không có";
-    // }
 
     if (!cccd || !name) {
         showToast("Vui lòng nhập đầy đủ thông tin!", "error")
@@ -347,7 +343,7 @@ function formatDateDisplay(dateString) {
 
 // Đổi lại ngày tháng
 function formatDateForInput(dateStr) {
-    if (dateStr===undefined) return;
+    if (dateStr === undefined) return;
     if (dateStr.includes("/")) { // Nếu ngày có dạng dd/MM/yyyy
         let parts = dateStr.split("/");
         return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
@@ -396,7 +392,7 @@ function exportToExcel() {
             let wb = XLSX.utils.book_new();
             let ws = XLSX.utils.aoa_to_sheet([
                 [dotKhamName], // Dòng đầu tiên là tên đợt khám
-                ["STT", "CCCD", "Tên", "Địa chỉ", "SĐT", "Ngày sinh", "Ngày khám", "Giới tính", "BHYT", "TLKK Mắt trái", "TLKK Mắt phải", "TLCK Mắt trái", "TLCK Mắt phải", "Chẩn đoán", "Chỉ định", "Tư vấn", "Ngày hẹn","QR"],
+                ["STT", "CCCD", "Tên", "Địa chỉ", "SĐT", "Ngày sinh", "Ngày khám", "Giới tính", "BHYT", "TLKK Mắt trái", "TLKK Mắt phải", "TLCK Mắt trái", "TLCK Mắt phải", "Chẩn đoán", "Chỉ định", "Tư vấn", "Ngày hẹn", "QR"],
                 ...data
             ]);
 
@@ -530,8 +526,30 @@ function loadPatientList() {
             // 📌 2️⃣ Hiển thị danh sách bệnh nhân bên trái
             const patientDiv = document.createElement("div");
             patientDiv.classList.add("patient-item", "border", "p-2", "mb-2");
+
+            // Tạo nút Xóa
+            const deleteBtn = document.createElement("button");
+            deleteBtn.textContent = "✖";
+            deleteBtn.classList.add("btn", "btn-danger", "btn-sm", "float-end");
+            deleteBtn.addEventListener("click", (e) => {
+                e.stopPropagation(); // Ngăn không cho click vào patientDiv
+                if (confirm(`Bạn có chắc muốn xóa bệnh nhân "${data.name}" không?`)) {
+                    // Gọi hàm xóa trong database, ví dụ Firestore
+                    deletePatient(patientId); // <-- bạn cần định nghĩa hàm này
+                }
+            });
+            // Tạo nội dung dòng đầu tiên (tên + status icon + nút xóa)
+            // const nameLine = document.createElement("p");
+            // nameLine.innerHTML = `<strong>${data.name}${statusIcon}</strong>`;
+            // nameLine.appendChild(deleteBtn);
+
+            // Thêm vào patientDiv
+            // patientDiv.appendChild(nameLine);
+            // patientDiv.innerHTML += `<p>${data.dob}</p>`;
+
             patientDiv.innerHTML = `<p><strong>${data.name}${statusIcon}</strong></p><p>${data.dob}</p>`;
             patientDiv.style.cursor = "pointer";
+
 
             // 📌 3️⃣ Khi click vào bệnh nhân, hiển thị thông tin chi tiết
             patientDiv.addEventListener("click", function () {
@@ -541,6 +559,20 @@ function loadPatientList() {
                 document.getElementById("detail-phone").innerText = data.phone;
                 document.getElementById("detail-gender").innerText = data.gender;
                 document.getElementById("detail-bhyt").innerText = data.bhyt;
+                // Tạo nút Xóa
+                const deleteBtn = document.createElement("button");
+                deleteBtn.textContent = "Xóa";
+                deleteBtn.classList.add("btn", "btn-danger", "btn-sm", "float-start");
+                deleteBtn.addEventListener("click", (e) => {
+                    e.stopPropagation(); // Ngăn không cho click vào patientDiv
+                    if (confirm(`Bạn có chắc muốn xóa bệnh nhân "${data.name}" không?`)) {
+                        // Gọi hàm xóa trong database, ví dụ Firestore
+                        deletePatient(patientId); // <-- bạn cần định nghĩa hàm này
+                    }
+                });
+                document.getElementById("btnDelete").innerHTML=""
+                document.getElementById("btnDelete").appendChild(deleteBtn)
+                
 
                 document.getElementById("infoPantient").classList.add("d-md-block");
                 document.getElementById("infoPantient").classList.remove("d-md-none");
@@ -725,6 +757,19 @@ function loadPatientList() {
     });
 }
 
+// Xóa bệnh nhân
+function deletePatient(patientId) {
+    db.collection("dot_kham").doc(dotKhamId).collection("benh_nhan").doc(patientId).delete()
+        .then(() => {
+            console.log(`✅ Đã xóa bệnh nhân có ID: ${patientId}`);
+        })
+        .catch((error) => {
+            console.error("❌ Lỗi khi xóa bệnh nhân:", error);
+            alert("Xóa bệnh nhân thất bại. Vui lòng thử lại.");
+        });
+}
+
+
 // ✅ Hàm lưu nội dung tư vấn vào Firestore
 function saveAdvice(patientId) {
     let adviceText = document.getElementById(`advice-${patientId}`).value;
@@ -862,7 +907,7 @@ function printPatientReport(patientData) {
         address: patientData.address,
         phone: patientData.phone,
     });
-    
+
 
     const printWindow = window.open('', '', 'width=800,height=600');
 
