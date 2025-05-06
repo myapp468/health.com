@@ -381,7 +381,7 @@ function exportToExcel() {
                     `'${patient.visionRight || "Chưa đo"}`,
                     `'${patient.visionLeftCk || "Chưa đo"}`,
                     `'${patient.visionRightCk || "Chưa đo"}`,
-                    patient.diagnosis || "Chưa có",
+                    patient.diagnosis.join(",") || "Chưa có",
                     patient.treatment || "Chưa có",
                     patient.advice || "Chưa có",
                     patient.appointmentDate || "Chưa có",
@@ -570,9 +570,9 @@ function loadPatientList() {
                         deletePatient(patientId); // <-- bạn cần định nghĩa hàm này
                     }
                 });
-                document.getElementById("btnDelete").innerHTML=""
+                document.getElementById("btnDelete").innerHTML = ""
                 document.getElementById("btnDelete").appendChild(deleteBtn)
-                
+
 
                 document.getElementById("infoPantient").classList.add("d-md-block");
                 document.getElementById("infoPantient").classList.remove("d-md-none");
@@ -662,20 +662,22 @@ function loadPatientList() {
 
                         ${(roleKey == "admin" || roleKey == "nurse" || roleKey == "doctor") ? btnSave1 : ""}
                         
-                        
                         <hr>
 
                         <label>Chẩn đoán:</label>
-                        <select id="diagnosis-${patientId}" class="form-select mb-2" ${(roleKey == "admin" || roleKey == "doctor") ? '' : 'disabled'}>
-                            <option value="Bình thường">Bình thường</option>
-                            <option value="Cận thị">Cận thị</option>
-                            <option value="Viễn thị">Viễn thị</option>
-                            <option value="Loạn thị">Loạn thị</option>
-                            <option value="Đục thủy tinh thể">Đục thủy tinh thể</option>
-                            <option value="Mộng mắt">Mộng mắt</option>
-                            <option value="Quặm">Quặm</option>
-                            <option value="bệnh khán">Bệnh về mắt khác</option>
-                        </select>
+                        <div class="multi-select mb-2" id="diagnosis-multi-${patientId}">
+                            <div class="select-box" id="diagnosis-display-${patientId}" ${(roleKey == "admin" || roleKey == "doctor") ? '' : 'disabled'}" onclick="toggleDiagnosis('${patientId}')">Chọn chẩn đoán</div>
+                            <div class="checkboxes" id="diagnosis-${patientId}">
+                                <label><input type="checkbox" value="Bình thường" onchange="updateDiagnosisCount('${patientId}')"> Bình thường</label>
+                                <label><input type="checkbox" value="Cận thị" onchange="updateDiagnosisCount('${patientId}')"> Cận thị</label>
+                                <label><input type="checkbox" value="Viễn thị" onchange="updateDiagnosisCount('${patientId}')"> Viễn thị</label>
+                                <label><input type="checkbox" value="Loạn thị" onchange="updateDiagnosisCount('${patientId}')"> Loạn thị</label>
+                                <label><input type="checkbox" value="Đục thủy tinh thể" onchange="updateDiagnosisCount('${patientId}')"> Đục thủy tinh thể</label>
+                                <label><input type="checkbox" value="Mộng mắt" onchange="updateDiagnosisCount('${patientId}')"> Mộng mắt</label>
+                                <label><input type="checkbox" value="Quặm" onchange="updateDiagnosisCount('${patientId}')"> Quặm</label>
+                                <label><input type="checkbox" value="Bệnh về mắt khác" onchange="updateDiagnosisCount('${patientId}')"> Bệnh về mắt khác</label>
+                            </div>
+                        </div>
 
                         <label>Chỉ định:</label>
                         <select id="treatment-${patientId}" class="form-select mb-2" ${(roleKey == "admin" || roleKey == "doctor") ? '' : 'disabled'}>
@@ -730,7 +732,7 @@ function loadPatientList() {
                         const visionRightElement = document.getElementById(`vision-right-${patientId}`);
                         const visionLeftElementCk = document.getElementById(`vision-ck-left-${patientId}`);
                         const visionRightElementCk = document.getElementById(`vision-ck-right-${patientId}`);
-                        const diagnosisElement = document.getElementById(`diagnosis-${patientId}`);
+                        // const diagnosisElement = document.getElementById(`diagnosis-${patientId}`);
                         const treatmentElement = document.getElementById(`treatment-${patientId}`);
                         const adviceElement = document.getElementById(`advice-${patientId}`);
                         const dateAdviceElement = document.getElementById(`appointment-date-${patientId}`);
@@ -738,12 +740,22 @@ function loadPatientList() {
                         // const saveButton = document.getElementById(`save-btn-${patientId}`);
                         // const saveButton = document.getElementsByClassName(`save-btn-${patientId}`);
 
+                        const diagnosisValues = patientData.diagnosis || []; // Mảng chẩn đoán
+                        const diagnosisCheckboxes = document.querySelectorAll(`#diagnosis-${patientId} input[type="checkbox"]`);
+
+                        diagnosisCheckboxes.forEach(checkbox => {
+                            if (diagnosisValues.includes(checkbox.value)) {
+                                checkbox.checked = true;
+                            }
+                        });
+                        // Đếm số chẩn đoán
+                        updateDiagnosisCount(`${patientId}`)
 
                         if (visionLeftElement) visionLeftElement.value = patientData.visionLeft || "";
                         if (visionRightElement) visionRightElement.value = patientData.visionRight || "";
                         if (visionLeftElementCk) visionLeftElementCk.value = patientData.visionLeftCk || "";
                         if (visionRightElementCk) visionRightElementCk.value = patientData.visionRightCk || "";
-                        if (diagnosisElement) diagnosisElement.value = patientData.diagnosis || "";
+                        // if (diagnosisElement) diagnosisElement.value = patientData.diagnosis || "";
                         if (treatmentElement) treatmentElement.value = patientData.treatment || "";
                         if (adviceElement) adviceElement.value = patientData.advice || "";
                         if (dateAdviceElement) dateAdviceElement.value = formatDateForInput(patientData.appointmentDate) || "";
@@ -856,7 +868,8 @@ function saveDiagnosis(patientId) {
 
             const visionLeft = visionLeftElement.value;
             const visionRight = visionRightElement.value;
-            const diagnosis = diagnosisElement.value;
+            // const diagnosis = diagnosisElement.value;
+            const diagnosis = getSelectedDiagnosis(patientId);
             const treatment = treatmentElement.value;
             if (!visionLeft || !visionRight || !diagnosis || !treatment) {
                 showToast("Vui lòng điền đủ thông tin", "error");
@@ -1038,5 +1051,46 @@ function printPatientReport(patientData) {
         </html>
     `);
     printWindow.document.close();
+}
+
+// Hiển thị sự kiện chọn bằng js cho chẩn đoán
+function toggleDiagnosis(patientId) {
+    const box = document.getElementById(`diagnosis-${patientId}`);
+    box.style.display = box.style.display === "block" ? "none" : "block";
+}
+
+document.addEventListener("click", function (e) {
+    document.querySelectorAll(".checkboxes").forEach(box => {
+        if (!box.parentElement.contains(e.target)) {
+            box.style.display = "none";
+        }
+    });
+});
+
+// Hàm lấy danh sách chẩn đoán đã chọn
+function getSelectedDiagnosis(patientId) {
+    const checkboxes = document.querySelectorAll(`#diagnosis-${patientId} input[type=checkbox]:checked`);
+    return Array.from(checkboxes).map(cb => cb.value);
+}
+
+function updateDiagnosisCount(patientId) {
+    // Lấy tất cả các checkbox của phần tử chẩn đoán
+    var checkboxes = document.querySelectorAll(`#diagnosis-${patientId} input[type="checkbox"]`);
+    
+    // Đếm số lượng checkbox được chọn
+    var selectedCount = 0;
+    checkboxes.forEach(function(checkbox) {
+        if (checkbox.checked) {
+            selectedCount++;
+        }
+    });
+
+    // Cập nhật số lượng chẩn đoán đã chọn vào phần tử hiển thị
+    if (selectedCount==0) {
+        document.getElementById(`diagnosis-display-${patientId}`).innerText = `Chọn chẩn đoán`;
+    }
+    else{
+        document.getElementById(`diagnosis-display-${patientId}`).innerText = `Đã chọn: ${selectedCount} chẩn đoán`;
+    }
 }
 

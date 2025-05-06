@@ -1,10 +1,53 @@
 #patient-list {
-    max-height: 500px; /* Giới hạn chiều cao */
-    overflow-y: auto;  /* Bật thanh cuộn khi nội dung dài */
-    border-right: 1px solid #ddd; /* Tạo đường phân cách */
+    max-height: 500px;
+    /* Giới hạn chiều cao */
+    overflow-y: auto;
+    /* Bật thanh cuộn khi nội dung dài */
+    border-right: 1px solid #ddd;
+    /* Tạo đường phân cách */
     padding-right: 10px;
 }
 
-#table-excel{
+#table-excel {
     display: none;
+}
+
+.multi-select {
+    position: relative;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background: #fff;
+}
+
+.select-box {
+    padding: 10px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.checkboxes {
+    display: none;
+    border-top: 1px solid #ccc;
+    background: #fff;
+    position: absolute;
+    width: 100%;
+    z-index: 2;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.checkboxes label {
+    display: block;
+    padding: 8px 10px;
+    cursor: pointer;
+}
+
+.checkboxes label:hover {
+    background-color: #f0f0f0;
+}
+
+.disabled {
+    pointer-events: none;
+    background-color: #e9ecef;
+    color: #6c757d;
 }
