@@ -245,6 +245,8 @@ document.querySelector(".btn-primary").addEventListener("click", function () {
                         document.getElementById("myForm").reset(); // Xóa dữ liệu nhập
                         var myModal = bootstrap.Modal.getInstance(document.getElementById('exampleModal'));
                         myModal.hide(); // Đóng modal sau khi lưu
+                        document.getElementById("infoPantient").classList.add("d-none")
+                        document.getElementById("resultPantient").classList.add("d-none")
                         showToast("Đã lưu bệnh nhân thành công!");
                     }).catch((error) => {
                         console.error("Lỗi khi thêm bệnh nhân:", error);
@@ -538,14 +540,6 @@ function loadPatientList() {
                     deletePatient(patientId); // <-- bạn cần định nghĩa hàm này
                 }
             });
-            // Tạo nội dung dòng đầu tiên (tên + status icon + nút xóa)
-            // const nameLine = document.createElement("p");
-            // nameLine.innerHTML = `<strong>${data.name}${statusIcon}</strong>`;
-            // nameLine.appendChild(deleteBtn);
-
-            // Thêm vào patientDiv
-            // patientDiv.appendChild(nameLine);
-            // patientDiv.innerHTML += `<p>${data.dob}</p>`;
 
             patientDiv.innerHTML = `<p><strong>${data.name}${statusIcon}</strong></p><p>${data.dob}</p>`;
             patientDiv.style.cursor = "pointer";
@@ -559,6 +553,18 @@ function loadPatientList() {
                 document.getElementById("detail-phone").innerText = data.phone;
                 document.getElementById("detail-gender").innerText = data.gender;
                 document.getElementById("detail-bhyt").innerText = data.bhyt;
+
+                // Tạo nút Sửa
+                const editBtn = document.createElement("button");
+                editBtn.textContent = "Sửa";
+                editBtn.classList.add("btn", "btn-warning", "btn-sm", "float-start", "me-1");
+                editBtn.addEventListener("click", (e) => {
+                    e.stopPropagation(); // Ngăn không cho click vào patientDiv
+                    editPatient(patientId)
+                });
+                document.getElementById("btnEdit").innerHTML = ""
+                document.getElementById("btnEdit").appendChild(editBtn)
+
                 // Tạo nút Xóa
                 const deleteBtn = document.createElement("button");
                 deleteBtn.textContent = "Xóa";
@@ -712,7 +718,7 @@ function loadPatientList() {
                     printButton.innerText = "In Phiếu Khám";
                     printButton.classList.add("btn", "btn-success", "mt-2");
                     printButton.onclick = function () {
-                        printPatientReport(data);
+                        handlePrintButtonClick(dotKhamId, patientId);
                     };
 
                     diagnosisContainer.appendChild(printButton);
@@ -780,7 +786,33 @@ function deletePatient(patientId) {
             alert("Xóa bệnh nhân thất bại. Vui lòng thử lại.");
         });
 }
-
+// Xóa bệnh nhân
+function editPatient(patientId) {
+    db.collection("dot_kham").doc(dotKhamId).collection("benh_nhan").doc(patientId)
+        .then(() => {
+            data=doc.data()
+            // Gán vào form
+            document.getElementById("updateId1").value = data.cccd;
+            document.getElementById("updateName").value = data.name;
+            document.getElementById("updateAddress").value = data.address;
+            document.getElementById("updatePhone").value = data.phone;
+            // document.getElementById("updateDob").value = formatDateInput(dob);
+            // document.getElementById("updateDate").value = formatDateInput(date);
+            document.getElementById("updateBhyt").value = data.bhyt;
+            document.getElementById("updateMale").checked = (data.gender === "Nam");
+            document.getElementById("updateFemale").checked = (data.gender === "Nữ");
+            // Lưu ID document firestore vào 1 biến toàn cục hoặc data attribute
+            row.dataset.docId && (document.getElementById("updateModal").dataset.docId = row.dataset.docId);
+            // Hiện modal
+            const modal = new bootstrap.Modal(document.getElementById('updateModal'));
+            modal.show();
+            console.log(`✅ Đang sửa thông tin bệnh nhân: ${patientId}`);
+        })
+        .catch((error) => {
+            console.error("❌ Lỗi khi xóa bệnh nhân:", error);
+            alert("Xóa bệnh nhân thất bại. Vui lòng thử lại.");
+        });
+}
 
 // ✅ Hàm lưu nội dung tư vấn vào Firestore
 function saveAdvice(patientId) {
@@ -898,8 +930,6 @@ function saveDiagnosis(patientId) {
         showToast("Error getting document:", "error");
     });
 }
-
-
 
 // Gọi hàm khi trang tải
 document.addEventListener("DOMContentLoaded", loadPatientList);
@@ -1032,20 +1062,20 @@ function printPatientReport(patientData) {
             </div>
 
             <script>
-                // window.onload = function() {
-                //     // Tạo mã QR
-                //     new QRCode(document.getElementById("qrcode"), {
-                //         text: encodeURIComponent(${JSON.stringify(qrData)}),
-                //         width: 150,
-                //         height: 150,
-                //         correctLevel: QRCode.CorrectLevel.L
-                //     });
+                window.onload = function() {
+                    // Tạo mã QR
+                    // new QRCode(document.getElementById("qrcode"), {
+                    //     text: encodeURIComponent(${JSON.stringify(qrData)}),
+                    //     width: 150,
+                    //     height: 150,
+                    //     correctLevel: QRCode.CorrectLevel.L
+                    // });
 
-                //     setTimeout(() => {
-                //         window.print();
-                //         window.close();
-                //     }, 500);
-                // };
+                    setTimeout(() => {
+                        window.print();
+                        window.close();
+                    }, 500);
+                };
             </script>
         </body>
         </html>
@@ -1076,21 +1106,30 @@ function getSelectedDiagnosis(patientId) {
 function updateDiagnosisCount(patientId) {
     // Lấy tất cả các checkbox của phần tử chẩn đoán
     var checkboxes = document.querySelectorAll(`#diagnosis-${patientId} input[type="checkbox"]`);
-    
+
     // Đếm số lượng checkbox được chọn
     var selectedCount = 0;
-    checkboxes.forEach(function(checkbox) {
+    checkboxes.forEach(function (checkbox) {
         if (checkbox.checked) {
             selectedCount++;
         }
     });
 
     // Cập nhật số lượng chẩn đoán đã chọn vào phần tử hiển thị
-    if (selectedCount==0) {
+    if (selectedCount == 0) {
         document.getElementById(`diagnosis-display-${patientId}`).innerText = `Chọn chẩn đoán`;
     }
-    else{
+    else {
         document.getElementById(`diagnosis-display-${patientId}`).innerText = `Đã chọn: ${selectedCount} chẩn đoán`;
     }
 }
 
+//Update
+function handlePrintButtonClick(dotKhamId, patientId) {
+    db.collection("dot_kham").doc(dotKhamId).collection("benh_nhan").doc(patientId).get().then((doc) => {
+        const data = doc.data();
+        printPatientReport(data);
+    })
+
+    // printPatientReport(updatedPatientData);
+}
