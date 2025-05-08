@@ -52,7 +52,6 @@
         <span id="btnAdd">
 
         </span>
-        <!-- <button class="btn btn-success mb-2" onclick="exportToExcel()">Xuất Excel</button> -->
         <table class="table table-bordered" id="table-excel">
             <thead>
                 <tr>
@@ -97,6 +96,7 @@
                     <p><strong>Địa chỉ:</strong> <span id="detail-address"></span></p>
                     <p><strong>SĐT:</strong> <span id="detail-phone"></span></p>
                     <p><strong>Giới tính:</strong> <span id="detail-gender"></span></p>
+                    <p><strong>CCCD:</strong> <span id="detail-cccd"></span></p>
                     <p><strong>BHYT:</strong> <span id="detail-bhyt"></span></p>
                     <p id="btnEdit"></p>
                     <p id="btnDelete"></p>
@@ -184,7 +184,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                    <button type="button" class="btn btn-primary">Lưu</button>
+                    <button type="button" class="btn btn-primary" id="addPatient">Lưu</button>
                 </div>
             </div>
         </div>
@@ -196,7 +196,7 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h1 class="modal-title fs-5" id="updateModalLabel">Thông tin bệnh nhân</h1>
+                    <h1 class="modal-title fs-5" id="updateModalLabel">Sửa thông tin bệnh nhân</h1>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -257,6 +257,12 @@
                                         type="radio" name="gender" id="updateMale"> Nam<input class="ms-3 form-check-input"
                                         type="radio" name="gender" id="updateFemale"> Nữ
                                 </div>
+                                <div class="col-6 my-1  d-none">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="idTempToUpdate" placeholder="Số thẻ BHYT">
+                                        <label for="bhyt">Số thẻ BHYT</label>
+                                    </div>
+                                </div>
                                 <div id="updateSaveInfo" class="d-none"></div>
                             </div>
                         </div>
@@ -264,7 +270,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                    <button type="button" class="btn btn-primary">Lưu</button>
+                    <button type="button" class="btn btn-primary" id="saveEditPatient">Lưu</button>
                 </div>
             </div>
         </div>

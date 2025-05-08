@@ -160,7 +160,7 @@ modalEl.addEventListener('hidden.bs.modal', function () {
 
 
 // Thêm bệnh nhân
-document.querySelector(".btn-primary").addEventListener("click", function () {
+document.querySelector("#addPatient").addEventListener("click", function () {
     const cccd = document.getElementById("id1").value.trim();
     const name = document.getElementById("name").value.trim();
     const address = document.getElementById("address").value.trim();
@@ -335,6 +335,65 @@ document.querySelector(".btn-primary").addEventListener("click", function () {
         });
 });
 
+// Thêm bệnh nhân
+document.querySelector("#saveEditPatient").addEventListener("click", function () {
+    const cccd = document.getElementById("updateId1").value.trim();
+    const name = document.getElementById("updateName").value.trim();
+    const address = document.getElementById("updateAddress").value.trim();
+    const phone = document.getElementById("updatePhone").value.trim();
+    const dob = formatDateDisplay(document.getElementById("updateDob").value);
+    const date = formatDateDisplay(document.getElementById("updateDate").value);
+    const gender = document.getElementById("updateMale").checked ? "Nam" : "Nữ";
+    const bhyt = document.getElementById("updateBhyt").value.trim() || "Không có";
+    const patientId = document.getElementById("idTempToUpdate").value.trim();
+
+    if (!cccd || !name) {
+        showToast("Vui lòng nhập đầy đủ thông tin!", "error")
+        return;
+    }
+
+    // Kiểm tra trùng dữ liệu trong bảng
+    const table = document.getElementById("patientList");
+    let isDuplicate = false;
+
+    for (let i = 0; i < table.rows.length; i++) {
+        let rowCCCD = table.rows[i].cells[0]?.innerText;
+        let rowBHYT = table.rows[i].cells[7]?.innerText;
+
+        if ((cccd !== "Không có" && cccd === rowCCCD) || (bhyt !== "Không có" && bhyt === rowBHYT)) {
+            isDuplicate = true;
+            break;
+        }
+    }
+    // Định nghĩa đường dẫn collection trong Firestore
+    const benhNhanRef = db.collection("dot_kham").doc(dotKhamId).collection("benh_nhan");
+    benhNhanRef.doc(patientId).update({
+        cccd: cccd,
+        name: name,
+        address: address,
+        phone: phone,
+        dob: dob,
+        date: date,
+        gender: gender,
+        bhyt: bhyt
+    })
+        .then(() => {
+            document.getElementById("updateMyForm").reset(); // Xóa dữ liệu nhập
+            var myModal = bootstrap.Modal.getInstance(document.getElementById('updateModal'));
+            myModal.hide(); // Đóng modal sau khi lưu
+            document.getElementById("detail-name").innerText = name;
+            document.getElementById("detail-dob").innerText = dob;
+            document.getElementById("detail-address").innerText = address;
+            document.getElementById("detail-phone").innerText = phone;
+            document.getElementById("detail-gender").innerText = gender;
+            document.getElementById("detail-bhyt").innerText = bhyt;
+            showToast("Đã cập nhật thông tin bệnh nhân!");
+        })
+        .catch((error) => {
+            // The document probably doesn't exist.
+            showToast(`Lỗi sửa thông tin ${error}`, "error");
+        });
+});
 
 // Hàm hiển thị ngày tháng theo format DD/MM/YYYY
 function formatDateDisplay(dateString) {
@@ -369,26 +428,33 @@ function exportToExcel() {
 
             querySnapshot.forEach(doc => {
                 let patient = doc.data();
+                console.log(Array.isArray(patient.diagnosis) && patient.diagnosis.length > 0
+                    ? patient.diagnosis.join(",")
+                    : "Chưa có");
+
                 data.push([
                     index++, // STT
                     patient.cccd,
                     patient.name,
                     patient.address,
-                    `'${patient.phone}`, // Giữ số 0 đầu số điện thoại
+                    `${patient.phone}`, // Giữ số 0 đầu số điện thoại
                     patient.dob,
                     patient.date,
                     patient.gender,
                     patient.bhyt,
-                    `'${patient.visionLeft || "Chưa đo"}`,
-                    `'${patient.visionRight || "Chưa đo"}`,
-                    `'${patient.visionLeftCk || "Chưa đo"}`,
-                    `'${patient.visionRightCk || "Chưa đo"}`,
-                    patient.diagnosis.join(",") || "Chưa có",
+                    `${patient.visionLeft || "Chưa đo"}`,
+                    `${patient.visionRight || "Chưa đo"}`,
+                    `${patient.visionLeftCk || "Chưa đo"}`,
+                    `${patient.visionRightCk || "Chưa đo"}`,
+                    (Array.isArray(patient.diagnosis) && patient.diagnosis.length > 0
+                        ? patient.diagnosis.join(",")
+                        : "Chưa có"),
                     patient.treatment || "Chưa có",
                     patient.advice || "Chưa có",
                     patient.appointmentDate || "Chưa có",
                     patient.qrResult
                 ]);
+
             });
 
             let wb = XLSX.utils.book_new();
@@ -482,6 +548,7 @@ function loadPatientList() {
                 document.getElementById("detail-address").innerText = data.address;
                 document.getElementById("detail-phone").innerText = data.phone;
                 document.getElementById("detail-gender").innerText = data.gender;
+                document.getElementById("detail-cccd").innerText = data.cccd;
                 document.getElementById("detail-bhyt").innerText = data.bhyt;
             });
 
@@ -552,6 +619,7 @@ function loadPatientList() {
                 document.getElementById("detail-address").innerText = data.address;
                 document.getElementById("detail-phone").innerText = data.phone;
                 document.getElementById("detail-gender").innerText = data.gender;
+                document.getElementById("detail-cccd").innerText = data.cccd;
                 document.getElementById("detail-bhyt").innerText = data.bhyt;
 
                 // Tạo nút Sửa
@@ -779,38 +847,35 @@ function loadPatientList() {
 function deletePatient(patientId) {
     db.collection("dot_kham").doc(dotKhamId).collection("benh_nhan").doc(patientId).delete()
         .then(() => {
-            console.log(`✅ Đã xóa bệnh nhân có ID: ${patientId}`);
+            showToast(`✅ Đã xóa bệnh nhân`);
         })
         .catch((error) => {
-            console.error("❌ Lỗi khi xóa bệnh nhân:", error);
-            alert("Xóa bệnh nhân thất bại. Vui lòng thử lại.");
+            showToast("Xóa bệnh nhân thất bại. Vui lòng thử lại.", "error");
         });
 }
 // Xóa bệnh nhân
 function editPatient(patientId) {
-    db.collection("dot_kham").doc(dotKhamId).collection("benh_nhan").doc(patientId)
-        .then(() => {
-            data=doc.data()
-            // Gán vào form
-            document.getElementById("updateId1").value = data.cccd;
-            document.getElementById("updateName").value = data.name;
-            document.getElementById("updateAddress").value = data.address;
-            document.getElementById("updatePhone").value = data.phone;
-            // document.getElementById("updateDob").value = formatDateInput(dob);
-            // document.getElementById("updateDate").value = formatDateInput(date);
-            document.getElementById("updateBhyt").value = data.bhyt;
-            document.getElementById("updateMale").checked = (data.gender === "Nam");
-            document.getElementById("updateFemale").checked = (data.gender === "Nữ");
-            // Lưu ID document firestore vào 1 biến toàn cục hoặc data attribute
-            row.dataset.docId && (document.getElementById("updateModal").dataset.docId = row.dataset.docId);
-            // Hiện modal
-            const modal = new bootstrap.Modal(document.getElementById('updateModal'));
-            modal.show();
-            console.log(`✅ Đang sửa thông tin bệnh nhân: ${patientId}`);
-        })
+    db.collection("dot_kham").doc(dotKhamId).collection("benh_nhan").doc(patientId).get().then((doc) => {
+        // Hiện modal
+        const modal = new bootstrap.Modal(document.getElementById('updateModal'));
+        modal.show();
+        data = doc.data()
+        // Gán vào form
+        document.getElementById("updateId1").value = data.cccd;
+        document.getElementById("updateName").value = data.name;
+        document.getElementById("updateAddress").value = data.address;
+        document.getElementById("updatePhone").value = data.phone;
+        document.getElementById("updateDob").value = formatDateForInput(data.dob);
+        document.getElementById("updateDate").value = formatDateForInput(data.date);
+        document.getElementById("updateBhyt").value = data.bhyt;
+        document.getElementById("updateMale").checked = (data.gender === "Nam");
+        document.getElementById("updateFemale").checked = (data.gender === "Nữ");
+        document.getElementById("idTempToUpdate").value = data.id;
+
+        // Lưu ID document firestore vào 1 biến toàn cục hoặc data attribute
+    })
         .catch((error) => {
-            console.error("❌ Lỗi khi xóa bệnh nhân:", error);
-            alert("Xóa bệnh nhân thất bại. Vui lòng thử lại.");
+            showToast(`Không tìm thấy bệnh nhân${error}`, "warning");
         });
 }
 
