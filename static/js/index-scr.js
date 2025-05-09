@@ -36,6 +36,7 @@ function logout(event) {
     firebase.auth().signOut()
         .then(() => {
             // Chuyển hướng người dùng đến trang đăng nhập
+            // window.location.href = "login.html"; // Hoặc bất kỳ trang nào bạn muốn
             localStorage.removeItem("user_session")
             localStorage.removeItem("local_name")
             localStorage.removeItem("pos_name")
@@ -108,19 +109,15 @@ function loadDotKham() {
             const li = document.createElement("li");
             li.classList.add("list-group-item");
             li.setAttribute("id", `dot_${doc.id}`);
-            
+
             db.collection("accounts").doc(userSession.user.uid).get().then((accountDoc) => {
                 let roleConfirm = (accountDoc.data().role == "admin" || accountDoc.data().role == "community");
-                li.innerHTML = roleConfirm ? `<strong class="examName" onclick="openDotKham('${saveIdExam}')">${data.name}</strong> - ${data.date} 
-                <span class="badge bg-${data.active ? 'success' : 'danger'} float-start me-1">${data.active ? 'Hoạt động' : 'Hoàn thành'}</span>
-                <button data-bs-toggle="tooltip" data-bs-placement="top" title="Xóa" class="btn btn-sm btn-danger float-end ${accountDoc.data().role == "admin" ? '' : 'd-none'}" onclick="xoaDotKham('${saveIdExam}')" ><i class="fa-solid fa-trash"></i></button>
+                li.innerHTML = roleConfirm ? `<table border="0" class="w-100"><tbody><tr><td onclick="openDotKham('${saveIdExam}')" style="width:90%"><strong class="examName" onclick="openDotKham('${saveIdExam}')">${data.name}</strong> - ${data.date} 
+                <span class="badge bg-${data.active ? 'success' : 'danger'} float-start me-1">${data.active ? 'Hoạt động' : 'Hoàn thành'}</span></td><td><button data-bs-toggle="tooltip" data-bs-placement="top" title="Xóa" class="btn btn-sm btn-danger float-end ${accountDoc.data().role == "admin" ? '' : 'd-none'}" onclick="xoaDotKham('${saveIdExam}')" ><i class="fa-solid fa-trash"></i></button>
                 <button data-bs-toggle="tooltip" data-bs-placement="top" title="Chuyển trạng thái" class="btn btn-sm btn-secondary float-end me-1" onclick="toggleStatus('${saveIdExam}', ${data.active})" ><i class="fa-solid fa-square-check"></i></button>
-                <button data-bs-toggle="tooltip" data-bs-placement="top" title="Sửa" class="btn btn-warning btn-sm float-end me-1" onclick="moModalSuaDotKham('${saveIdExam}', '${data.name}', '${data.date}')"><i class="fa-solid fa-pen-to-square"></i></button>
-                <button data-bs-toggle="tooltip" data-bs-placement="top" title="Khám" class="btn btn-sm btn-primary float-end me-1" onclick="openDotKham('${saveIdExam}')"><i class="fa-solid fa-notes-medical"></i></button>`
-                    : `<strong class="examName" onclick="openDotKham('${saveIdExam}')">${data.name}</strong> - ${data.date} 
-                <span class="badge bg-${data.active ? 'success' : 'danger'} float-start me-1">${data.active ? 'Hoạt động' : 'Hoàn thành'}</span>
-                <button data-bs-toggle="tooltip" data-bs-placement="top" title="Khám" class="btn btn-sm btn-primary float-end me-1" onclick="openDotKham('${saveIdExam}')"><i class="fa-solid fa-notes-medical"></i></button>`;
-                li.setAttribute("onclick",`openDotKham('${saveIdExam}')`)
+                <button data-bs-toggle="tooltip" data-bs-placement="top" title="Sửa" class="btn btn-warning btn-sm float-end me-1" onclick="moModalSuaDotKham('${saveIdExam}', '${data.name}', '${data.date}')"><i class="fa-solid fa-pen-to-square"></i></button></td></tr></tbody></table>`
+                    : `<table border="0" class="w-100"><tbody><tr><td onclick="openDotKham('${saveIdExam}')" style="width:90%"><strong class="examName" onclick="openDotKham('${saveIdExam}')">${data.name}</strong> - ${data.date} 
+                <span class="badge bg-${data.active ? 'success' : 'danger'} float-start me-1">${data.active ? 'Hoạt động' : 'Hoàn thành'}</span></td></tr></tbody></table>`;
                 list.appendChild(li);
             });
         });
@@ -200,16 +197,12 @@ function chenDotKhamVaoDanhSach(doc) {
 
     db.collection("accounts").doc(userSession.user.uid).get().then((accountDoc) => {
         let roleConfirm = (accountDoc.data().role == "admin" || accountDoc.data().role == "community");
-        li.innerHTML = roleConfirm ? `<strong class="examName" onclick="openDotKham('${saveIdExam}')">${data.name}</strong> - ${data.date} 
-        <span class="badge bg-${data.active ? 'success' : 'danger'} float-start me-1">${data.active ? 'Hoạt động' : 'Hoàn thành'}</span>
-        <button data-bs-toggle="tooltip" data-bs-placement="top" title="Xóa" class="btn btn-sm btn-danger float-end ${accountDoc.data().role == "admin" ? '' : 'd-none'}" onclick="xoaDotKham('${saveIdExam}')" ><i class="fa-solid fa-trash"></i></button>
-        <button data-bs-toggle="tooltip" data-bs-placement="top" title="Chuyển trạng thái" class="btn btn-sm btn-secondary float-end me-1" onclick="toggleStatus('${saveIdExam}', ${data.active})" ><i class="fa-solid fa-square-check"></i></button>
-        <button data-bs-toggle="tooltip" data-bs-placement="top" title="Sửa" class="btn btn-warning btn-sm float-end me-1" onclick="moModalSuaDotKham('${saveIdExam}', '${data.name}', '${data.date}')"><i class="fa-solid fa-pen-to-square"></i></button>
-        <button data-bs-toggle="tooltip" data-bs-placement="top" title="Khám" class="btn btn-sm btn-primary float-end me-1" onclick="openDotKham('${saveIdExam}')"><i class="fa-solid fa-notes-medical"></i></button>`
-            : `<strong class="examName" onclick="openDotKham('${saveIdExam}')">${data.name}</strong> - ${data.date} 
-        <span class="badge bg-${data.active ? 'success' : 'danger'} float-start me-1">${data.active ? 'Hoạt động' : 'Hoàn thành'}</span>
-        <button data-bs-toggle="tooltip" data-bs-placement="top" title="Khám" class="btn btn-sm btn-primary float-end me-1" onclick="openDotKham('${saveIdExam}')"><i class="fa-solid fa-notes-medical"></i></button>`;
-
+        li.innerHTML = roleConfirm ? `<table border="0" class="w-100"><tbody><tr><td onclick="openDotKham('${saveIdExam}')" style="width:90%"><strong class="examName" onclick="openDotKham('${saveIdExam}')">${data.name}</strong> - ${data.date} 
+                <span class="badge bg-${data.active ? 'success' : 'danger'} float-start me-1">${data.active ? 'Hoạt động' : 'Hoàn thành'}</span></td><td><button data-bs-toggle="tooltip" data-bs-placement="top" title="Xóa" class="btn btn-sm btn-danger float-end ${accountDoc.data().role == "admin" ? '' : 'd-none'}" onclick="xoaDotKham('${saveIdExam}')" ><i class="fa-solid fa-trash"></i></button>
+                <button data-bs-toggle="tooltip" data-bs-placement="top" title="Chuyển trạng thái" class="btn btn-sm btn-secondary float-end me-1" onclick="toggleStatus('${saveIdExam}', ${data.active})" ><i class="fa-solid fa-square-check"></i></button>
+                <button data-bs-toggle="tooltip" data-bs-placement="top" title="Sửa" class="btn btn-warning btn-sm float-end me-1" onclick="moModalSuaDotKham('${saveIdExam}', '${data.name}', '${data.date}')"><i class="fa-solid fa-pen-to-square"></i></button></td></tr></tbody></table>`
+                    : `<table border="0" class="w-100"><tbody><tr><td onclick="openDotKham('${saveIdExam}')" style="width:90%"><strong class="examName" onclick="openDotKham('${saveIdExam}')">${data.name}</strong> - ${data.date} 
+                <span class="badge bg-${data.active ? 'success' : 'danger'} float-start me-1">${data.active ? 'Hoạt động' : 'Hoàn thành'}</span></td></tr></tbody></table>`;
         list.prepend(li); // Chèn lên đầu danh sách
     });
 }
@@ -266,14 +259,14 @@ function xoaDotKham(id) {
 // Xử lý khi nhấn nút xác nhận xóa
 document.getElementById("confirmDeleteBtn").addEventListener("click", function () {
     if (deletingExamId) {
-        const tempId=deletingExamId
+        const tempId = deletingExamId
         db.collection("dot_kham").doc(deletingExamId).delete().then(() => {
             showToast("Đã xóa đợt khám thành công!");
             // xoaUpdateUI(deletingExamId); // Cập nhật danh sách
             const listItem = document.getElementById(`dot_${tempId}`);
             if (!listItem) return; // Nếu không tìm thấy item, thoát luôn
             listItem.remove()
-            
+
         }).catch(error => {
             showToast(`Lỗi: ${error}`, "error");
         });
@@ -292,6 +285,7 @@ function openDotKham(id) {
     window.location.href = `./static/page/dotkham.html?id=${id}`;
 }
 loadDotKham();
+
 
 // Sửa đợt khám
 function moModalSuaDotKham(id, name, date) {
