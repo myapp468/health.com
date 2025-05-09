@@ -506,7 +506,7 @@ function loadPatientList() {
     const diagnosisContainer = document.querySelector("#resultPantient"); // Cột phải
     const searchInput = document.getElementById("searchPatient"); // Ô tìm kiếm
     const filterValue = document.querySelector('input[name="filter"]:checked').value; // Kiểm tra radio
-
+    let allPatients = [];
     document.getElementById("infoPantient").classList.add("d-md-none");
     document.getElementById("infoPantient").classList.remove("d-md-block");
     document.getElementById("resultPantient").classList.add("d-md-none");
@@ -567,15 +567,13 @@ function loadPatientList() {
 
     table.innerHTML = ""; // Xóa bảng cũ để tránh trùng lặp
     patientListContainer.innerHTML = ""; // Xóa danh sách cột trái
-
+    
     db.collection("dot_kham").doc(dotKhamId).collection("benh_nhan").orderBy("createdAt", "desc").onSnapshot((querySnapshot) => {
         table.innerHTML = ""; // Đảm bảo không trùng lặp bảng
         patientListContainer.innerHTML = ""; // Đảm bảo không trùng lặp danh sách cột trái
-
         querySnapshot.forEach((doc) => {
             const data = doc.data();
             const patientId = doc.id;
-
 
             const isLocked = data.status === "lock";
             // 📌 Áp dụng bộ lọc
@@ -597,19 +595,23 @@ function loadPatientList() {
             patientDiv.classList.add("patient-item", "border", "p-2", "mb-2");
 
             // Tạo nút Xóa
-            const deleteBtn = document.createElement("button");
-            deleteBtn.textContent = "✖";
-            deleteBtn.classList.add("btn", "btn-danger", "btn-sm", "float-end");
-            deleteBtn.addEventListener("click", (e) => {
-                e.stopPropagation(); // Ngăn không cho click vào patientDiv
-                if (confirm(`Bạn có chắc muốn xóa bệnh nhân "${data.name}" không?`)) {
-                    // Gọi hàm xóa trong database, ví dụ Firestore
-                    deletePatient(patientId); // <-- bạn cần định nghĩa hàm này
-                }
-            });
+            // const roleCheck = (roleKey == "admin" || roleKey == "cs")
+            // if (roleCheck) {
+            //     const deleteBtn = document.createElement("button");
+            //     deleteBtn.textContent = "✖";
+            //     deleteBtn.classList.add("btn", "btn-danger", "btn-sm", "float-end");
+            //     deleteBtn.addEventListener("click", (e) => {
+            //         e.stopPropagation(); // Ngăn không cho click vào patientDiv
+            //         if (confirm(`Bạn có chắc muốn xóa bệnh nhân "${data.name}" không?`)) {
+            //             // Gọi hàm xóa trong database, ví dụ Firestore
+            //             deletePatient(patientId); // <-- bạn cần định nghĩa hàm này
+            //         }
+            //     });
+            // }
 
             patientDiv.innerHTML = `<p><strong>${data.name}${statusIcon}</strong></p><p>${data.dob}</p>`;
             patientDiv.style.cursor = "pointer";
+            allPatients.push(patientDiv)
 
 
             // 📌 3️⃣ Khi click vào bệnh nhân, hiển thị thông tin chi tiết
@@ -622,31 +624,37 @@ function loadPatientList() {
                 document.getElementById("detail-cccd").innerText = data.cccd;
                 document.getElementById("detail-bhyt").innerText = data.bhyt;
 
-                // Tạo nút Sửa
-                const editBtn = document.createElement("button");
-                editBtn.textContent = "Sửa";
-                editBtn.classList.add("btn", "btn-warning", "btn-sm", "float-start", "me-1");
-                editBtn.addEventListener("click", (e) => {
-                    e.stopPropagation(); // Ngăn không cho click vào patientDiv
-                    editPatient(patientId)
-                });
-                document.getElementById("btnEdit").innerHTML = ""
-                document.getElementById("btnEdit").appendChild(editBtn)
+                allPatients.forEach(div => div.classList.remove("selected"));
+                patientDiv.classList.add("selected")
+                
+                const roleCheck = (roleKey == "admin" || roleKey == "cs")
+                if (roleCheck) {
+                    // Tạo nút Sửa
+                    const editBtn = document.createElement("button");
+                    editBtn.textContent = "Sửa";
+                    editBtn.classList.add("btn", "btn-warning", "btn-sm", "float-start", "me-1");
+                    editBtn.addEventListener("click", (e) => {
+                        e.stopPropagation(); // Ngăn không cho click vào patientDiv
+                        editPatient(patientId)
+                    });
+                    document.getElementById("btnEdit").innerHTML = ""
+                    document.getElementById("btnEdit").appendChild(editBtn)
 
-                // Tạo nút Xóa
-                const deleteBtn = document.createElement("button");
-                deleteBtn.textContent = "Xóa";
-                deleteBtn.classList.add("btn", "btn-danger", "btn-sm", "float-start");
-                deleteBtn.addEventListener("click", (e) => {
-                    e.stopPropagation(); // Ngăn không cho click vào patientDiv
-                    if (confirm(`Bạn có chắc muốn xóa bệnh nhân "${data.name}" không?`)) {
-                        // Gọi hàm xóa trong database, ví dụ Firestore
-                        deletePatient(patientId); // <-- bạn cần định nghĩa hàm này
-                    }
-                });
-                document.getElementById("btnDelete").innerHTML = ""
-                document.getElementById("btnDelete").appendChild(deleteBtn)
+                    // Tạo nút Xóa
 
+                    const deleteBtn = document.createElement("button");
+                    deleteBtn.textContent = "Xóa";
+                    deleteBtn.classList.add("btn", "btn-danger", "btn-sm", "float-start");
+                    deleteBtn.addEventListener("click", (e) => {
+                        e.stopPropagation(); // Ngăn không cho click vào patientDiv
+                        if (confirm(`Bạn có chắc muốn xóa bệnh nhân "${data.name}" không?`)) {
+                            // Gọi hàm xóa trong database, ví dụ Firestore
+                            deletePatient(patientId); // <-- bạn cần định nghĩa hàm này
+                        }
+                    });
+                    document.getElementById("btnDelete").innerHTML = ""
+                    document.getElementById("btnDelete").appendChild(deleteBtn)
+                }
 
                 document.getElementById("infoPantient").classList.add("d-md-block");
                 document.getElementById("infoPantient").classList.remove("d-md-none");

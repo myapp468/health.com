@@ -36,7 +36,6 @@ function logout(event) {
     firebase.auth().signOut()
         .then(() => {
             // Chuyển hướng người dùng đến trang đăng nhập
-            // window.location.href = "login.html"; // Hoặc bất kỳ trang nào bạn muốn
             localStorage.removeItem("user_session")
             localStorage.removeItem("local_name")
             localStorage.removeItem("pos_name")
@@ -109,7 +108,7 @@ function loadDotKham() {
             const li = document.createElement("li");
             li.classList.add("list-group-item");
             li.setAttribute("id", `dot_${doc.id}`);
-
+            
             db.collection("accounts").doc(userSession.user.uid).get().then((accountDoc) => {
                 let roleConfirm = (accountDoc.data().role == "admin" || accountDoc.data().role == "community");
                 li.innerHTML = roleConfirm ? `<strong class="examName" onclick="openDotKham('${saveIdExam}')">${data.name}</strong> - ${data.date} 
@@ -121,6 +120,7 @@ function loadDotKham() {
                     : `<strong class="examName" onclick="openDotKham('${saveIdExam}')">${data.name}</strong> - ${data.date} 
                 <span class="badge bg-${data.active ? 'success' : 'danger'} float-start me-1">${data.active ? 'Hoạt động' : 'Hoàn thành'}</span>
                 <button data-bs-toggle="tooltip" data-bs-placement="top" title="Khám" class="btn btn-sm btn-primary float-end me-1" onclick="openDotKham('${saveIdExam}')"><i class="fa-solid fa-notes-medical"></i></button>`;
+                li.setAttribute("onclick",`openDotKham('${saveIdExam}')`)
                 list.appendChild(li);
             });
         });
@@ -292,7 +292,6 @@ function openDotKham(id) {
     window.location.href = `./static/page/dotkham.html?id=${id}`;
 }
 loadDotKham();
-
 
 // Sửa đợt khám
 function moModalSuaDotKham(id, name, date) {

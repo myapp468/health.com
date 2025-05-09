@@ -8,6 +8,11 @@
     padding-right: 10px;
 }
 
+.selected {
+    background-color: seagreen;
+    color: white;
+}
+
 #table-excel {
     display: none;
 }
