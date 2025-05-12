@@ -13,10 +13,10 @@ db.collection("accounts").doc(userSession.user.uid).get().then((doc) => {
     if (!roleCheck) {
         window.location.href = '../../'
     }
-    document.getElementById("menuList").innerHTML+=roleCheck ? `
+    document.getElementById("menuList").innerHTML += roleCheck ? `
         <li class="nav-item">
             <a class="nav-link" href="./checkaccount.html" id="adminRole">Phân quyền</a>
-        </li>`:""
+        </li>`: ""
 }).catch((error) => {
     console.log("Error getting document:", error);
 });
@@ -169,3 +169,46 @@ function showToast(message, type = "success") {
     toast.show();
 }
 
+document.querySelector("#addUserBtn").addEventListener("click", function () {
+    const fullName = document.getElementById("newFullName").value.trim();
+    const email = document.getElementById("newEmail").value.trim();
+    const password = document.getElementById("newAddPassword").value;
+    const role = document.getElementById("newRole").value;
+
+    if (!fullName || !email || !password || !role) {
+        showToast("Vui lòng nhập đầy đủ thông tin!");
+        return;
+    }
+
+    firebase.auth().createUserWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+            const user = userCredential.user;
+            return db.collection("accounts").doc(user.uid).set({
+                fullName: fullName,
+                email: email,
+                role: role,
+                locked: false, // tài khoản hoạt động mặc định
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        })
+        .then(() => {
+            showToast("Tạo tài khoản thành công!");
+            document.getElementById("addUserForm").reset();
+
+            // Ẩn modal
+            const modalElement = document.getElementById('addUserModal');
+            const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+            modal.hide();
+
+            // Cleanup lớp backdrop nếu còn
+            setTimeout(() => {
+                document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+                document.body.classList.remove('modal-open');
+                document.body.style.paddingRight = '';
+            }, 300);
+        })
+        .catch((error) => {
+            const errorMessage = error.message;
+            showToast("Lỗi khi tạo tài khoản!", errorMessage);
+        });
+});
